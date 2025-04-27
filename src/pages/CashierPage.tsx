@@ -1,6 +1,37 @@
+import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
+import LaundryWeightSection from "../sections/LaundryWeightSection";
 
 function CashierPage() {
+  const [laundryWeights, setLaundryWeights] = useState<{
+    [name: string]: { value: number; limit: number };
+  }>({});
+  const [selectedServices, setSelectedServices] = useState<{
+    [name: string]: number;
+  }>({});
+  const [orderTotal, setOrderTotal] = useState<number>(0);
+
+  // Calculate order summary and total
+  useEffect(() => {
+    let total = 0;
+    Object.entries(selectedServices).forEach(([serviceName, servicePrice]) => {
+      if (serviceName === "Full Service") {
+        total += 100; // Fixed price for Full Service
+      } else {
+        let serviceTotal = 0;
+        Object.entries(laundryWeights).forEach(([_, data]) => {
+          if (data.value > 0 && data.limit > 0) {
+            const loads = Math.ceil(data.value / data.limit);
+            const subTotal = loads * servicePrice;
+            serviceTotal += subTotal;
+          }
+        });
+        total += serviceTotal;
+      }
+    });
+    setOrderTotal(total);
+  }, [laundryWeights, selectedServices]);
+
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit">
       <NavBar />
@@ -19,106 +50,11 @@ function CashierPage() {
         </div>
       </div>
       <main className="flex gap-1">
-        <div className="flex-1 flex flex-col gap-1 text-secondary bg-primary min-w-fit pr-4">
-          <div className="border-2 border-primary">
-            <p className="text-4xl font-bold text-accent">Laundry Weight</p>
-            <div className="flex gap-4">
-              <div>
-                <p>Regular Clothes</p>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    data-category="Regular Clothes"
-                    data-limit="7"
-                    data-unit="kg"
-                    step="0.1"
-                    className="category-input p-2 text-primary font-bold bg-secondary"
-                  />
-                  <p>kg</p>
-                </div>
-                <p>₱ 55 per 7kg</p>
-              </div>
-              <div>
-                <p>Towels, Blankets, Beddings</p>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    data-category="Towels, Blankets, Beddings"
-                    data-limit="4"
-                    data-unit="kg"
-                    step="0.1"
-                    className="category-input p-2 text-primary font-bold bg-secondary"
-                  />
-                  <p>kg</p>
-                </div>
-                <p>₱ 55 per 4kg</p>
-              </div>
-              <div>
-                <p>Comforter Queensize, Heavy Blankets</p>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    data-category="Comforter Queensize, Heavy Blankets"
-                    data-limit="1"
-                    data-unit="pc"
-                    step="1"
-                    className="category-input p-2 text-primary font-bold bg-secondary"
-                  />
-                  <p>pc</p>
-                </div>
-                <p>₱55 per 1pc</p>
-              </div>
-            </div>
-            <p className="text-4xl font-bold text-accent">Services</p>
-            <div className="flex">
-              <form className="flex gap-4">
-                <div className="px-2 flex border-2 border-secondary text-secondary p-1 gap-2">
-                  <input
-                    className="service-checkbox scale-150"
-                    value="Wash"
-                    data-price="55"
-                    type="checkbox"
-                    name=""
-                    id=""
-                  />
-                  <p className="text-2xl">Wash</p>
-                </div>
-                <div className="px-2 flex border-2 border-secondary text-secondary p-1 gap-2">
-                  <input
-                    className="service-checkbox scale-150"
-                    value="Dry"
-                    data-price="55"
-                    type="checkbox"
-                    name=""
-                    id=""
-                  />
-                  <p className="text-2xl">Dry</p>
-                </div>
-                <div className="px-2 flex border-2 border-secondary text-secondary p-1 gap-2">
-                  <input
-                    className="service-checkbox scale-150"
-                    value="Fold"
-                    data-price="20"
-                    type="checkbox"
-                    name=""
-                    id=""
-                  />
-                  <p className="text-2xl">Fold</p>
-                </div>
-                <div className="px-2 flex border-2 border-secondary text-secondary p-1 gap-2">
-                  <input
-                    className="service-checkbox scale-150"
-                    value="Full Service"
-                    data-price="100"
-                    type="checkbox"
-                    name=""
-                    id=""
-                  />
-                  <p className="text-2xl">Full Service</p>
-                </div>
-              </form>
-            </div>
-          </div>
+        <div className="flex-1 flex flex-col gap-1 min-w-fit pr-4">
+          <LaundryWeightSection
+            setLaundryWeights={setLaundryWeights}
+            setSelectedServices={setSelectedServices}
+          />
           <div className="border-2 border-primary bg-secondary">
             <p className="text-4xl font-bold text-accent">Products</p>
             <div className="flex text-primary">
@@ -144,18 +80,80 @@ function CashierPage() {
             </table>
           </div>
         </div>
-        <div className=" flex-1 flex flex-col p-2">
-          <div id="orderSummary" className=" mb-4 ">
+        <div className=" flex-1 flex flex-col p-2 py-0">
+          <div className=" mb-4 ">
             <p className="font-bold text-3xl">Order</p>
+            <div className=" p-4 rounded-lg flex flex-col gap-2">
+              {Object.entries(selectedServices).map(
+                ([serviceName, servicePrice]) => {
+                  let serviceTotal = 0;
+                  const isFullService = serviceName === "Full Service";
+                  return (
+                    <div
+                      key={serviceName}
+                      className="p-2 border-2 rounded-md border-gray-300"
+                    >
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <p>{serviceName}</p>
+                        <p>
+                          TOTAL{" "}
+                          {isFullService
+                            ? 100
+                            : Object.entries(laundryWeights).reduce(
+                                (sum, [_, data]) => {
+                                  if (data.value > 0 && data.limit > 0) {
+                                    const loads = Math.ceil(
+                                      data.value / data.limit
+                                    );
+                                    const subTotal = loads * servicePrice;
+                                    serviceTotal += subTotal;
+                                    return sum + subTotal;
+                                  }
+                                  return sum;
+                                },
+                                0
+                              )}
+                        </p>
+                      </div>
+                      <ul>
+                        {isFullService ? (
+                          <li className="flex justify-between">
+                            - Fixed Price <span>100</span>
+                          </li>
+                        ) : (
+                          Object.entries(laundryWeights).map(
+                            ([laundryName, data]) => {
+                              if (data.value > 0 && data.limit > 0) {
+                                const loads = Math.ceil(
+                                  data.value / data.limit
+                                );
+                                const subTotal = loads * servicePrice;
+                                return (
+                                  <li
+                                    key={laundryName}
+                                    className="flex justify-between"
+                                  >
+                                    - {laundryName} <span>{subTotal}</span>
+                                  </li>
+                                );
+                              }
+                              return null;
+                            }
+                          )
+                        )}
+                      </ul>
+                    </div>
+                  );
+                }
+              )}
+            </div>
           </div>
           <div className="">
             <p className="font-bold text-3xl">Summary</p>
             <div className="my-2 bg-gray-300 p-4 rounded-lg flex flex-col">
               <div className="flex justify-between">
                 <p className="text-2xl">Total </p>
-                <p id="orderTotal" className="text-2xl">
-                  PHP 0
-                </p>
+                <p className="text-2xl">PHP {orderTotal}</p>
               </div>
             </div>
             <button className="p-3 bg-orange-400 text-xl rounded-lg w-full">

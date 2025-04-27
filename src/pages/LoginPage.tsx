@@ -26,7 +26,7 @@ function LoginPage() {
     const result = await login(email, password);
     if (result.success) {
       setError("Login successful! Redirecting...");
-      navigate("/pos", { replace: true });
+      navigate("/dashboard", { replace: true });
     } else if (result.message) {
       setError(result.message);
     }

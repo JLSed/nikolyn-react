@@ -92,7 +92,7 @@ function LaundryWeightSection({
   };
 
   return (
-    <div className="border-2 bg-primary text-secondary p-4">
+    <div className="border-2 bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
       <p className="text-2xl font-bold text-accent">Laundry Weight</p>
       <div className="flex gap-4">
         {laundryType.map((type) => (
@@ -101,7 +101,7 @@ function LaundryWeightSection({
             <div className="flex gap-2 items-center">
               <input
                 type="number"
-                className="category-input p-2 text-primary font-bold bg-secondary"
+                className="category-input p-2 rounded-md text-primary font-bold bg-secondary"
                 onChange={(e) =>
                   handleLaundryWeightChange(
                     type.laundryName,
@@ -117,13 +117,13 @@ function LaundryWeightSection({
           </div>
         ))}
       </div>
-      <p className="text-4xl font-bold text-accent">Services</p>
+      <p className="text-3xl font-bold text-accent mt-4">Services</p>
       <div className="flex">
         <form className="flex gap-4">
           {services.map((service) => (
             <div key={service.serviceKey}>
               <p>₱ {service.servicePrice} per Limit</p>
-              <div className="px-2 flex border-2 border-secondary text-secondary p-1 gap-2">
+              <div className="px-2 flex border-2 border-secondary rounded-md text-secondary p-1 gap-2">
                 <input
                   className="scale-150"
                   value="Wash"

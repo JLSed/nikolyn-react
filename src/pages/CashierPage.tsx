@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import LaundryWeightSection from "../sections/LaundryWeightSection";
+import ProductSection from "../sections/ProductSection"
 
 function CashierPage() {
   const [laundryWeights, setLaundryWeights] = useState<{
@@ -50,35 +51,12 @@ function CashierPage() {
         </div>
       </div>
       <main className="flex gap-1">
-        <div className="flex-1 flex flex-col gap-1 min-w-fit pr-4">
+        <div className="flex-1 flex flex-col gap-8 min-w-fit pr-4">
           <LaundryWeightSection
             setLaundryWeights={setLaundryWeights}
             setSelectedServices={setSelectedServices}
           />
-          <div className="border-2 border-primary bg-secondary">
-            <p className="text-4xl font-bold text-accent">Products</p>
-            <div className="flex text-primary">
-              <input
-                id="search_product"
-                className="flex-1 mr-4 p-1 border-2 border-primary text-primary bg-secondary"
-                placeholder="Search Product..."
-              />
-              <p>Filter</p>
-            </div>
-            <table className="w-full">
-              <thead className="text-primary text-left">
-                <tr>
-                  <th className="p-2">Product Name</th>
-                  <th className="p-2">Quantity</th>
-                  <th className="p-2">Price</th>
-                </tr>
-              </thead>
-              <tbody
-                id="productBody"
-                className="bg-primary text-secondary"
-              ></tbody>
-            </table>
-          </div>
+                    <ProductSection />
         </div>
         <div className=" flex-1 flex flex-col p-2 py-0">
           <div className=" mb-4 ">

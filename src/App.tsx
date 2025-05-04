@@ -2,8 +2,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import CashierPage from "./pages/CashierPage";
 import DashboardPage from "./pages/DashboardPage";
-import InventoryPage from "./pages/InventoryPage"
-
+import InventoryPage from "./pages/InventoryPage";
 
 function App() {
   return (

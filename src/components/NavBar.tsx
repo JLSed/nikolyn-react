@@ -3,66 +3,46 @@ import { signOut } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import LinkButton from "./LinkButton";
 import { getCurrentWorker } from "../lib/supabase";
-import { WorkerRole } from "../types/interface";
+import { WorkerRole } from "../types/worker";
 
 function NavBar() {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("Nikolyn's Laundry Shop");
+  const [workerName, setworkerName] = useState("Nikolyn's Laundry Shop");
+  const [workerRoles, setWorkerRoles] = useState<WorkerRole[] | undefined>([]);
   const [isClockOutModalOpen, setIsClockOutModalOpen] = useState(false);
-  const [isCashier, setIsCashier] = useState(false);
-  const [isSystemAdmin, setIsSystemAdmin] = useState(false);
-  const [isInventoryManager, setIsInventoryManager] = useState(false);
 
   useEffect(() => {
-    const displayUserName = async () => {
+    const displayworkerName = async () => {
       const currentWorker = localStorage.getItem("currentWorker");
       if (currentWorker) {
-        setUserName(JSON.parse(currentWorker).shortenedName);
-        checkUserRoles(JSON.parse(currentWorker).worker_roles);
+        setworkerName(JSON.parse(currentWorker).shortenedName);
+        setWorkerRoles(JSON.parse(currentWorker).data?.roles);
       } else {
         const result = await getCurrentWorker();
-        if (result && result.success) {
-          const { first_name, middle_name, last_name } = result?.worker || {};
+        if (result.success) {
+          console.log(result);
+          const { first_name, middle_name, last_name } =
+            result?.data?.worker || {};
           const shortenedName = `${first_name?.charAt(0)}. ${
             middle_name ? middle_name.charAt(0) + ". " : ""
           }${last_name}`;
           const currentWorker = { ...result, shortenedName: shortenedName };
-          setUserName(shortenedName);
+          setworkerName(shortenedName);
           localStorage.setItem("currentWorker", JSON.stringify(currentWorker));
           // Check user roles
-          if (result?.worker_roles) {
-            checkUserRoles(result.worker_roles);
-          }
+          setWorkerRoles(result?.data?.roles);
         } else {
           console.error("Failed to fetch worker data:", result?.error);
         }
       }
     };
-    displayUserName();
+    displayworkerName();
   }, []);
-
-  const checkUserRoles = (roles: WorkerRole) => {
-    if (roles) {
-      Object.values(roles).forEach((role) => {
-        if (role.TBL_ROLE?.role_name === "CASHIER") {
-          setIsCashier(true);
-        }
-        if (role.TBL_ROLE?.role_name === "SYSTEM ADMIN") {
-          setIsSystemAdmin(true);
-        }
-        if (role.TBL_ROLE?.role_name === "INVENTORY MANAGER") {
-          setIsInventoryManager(true);
-        }
-      });
-    } else {
-      console.error("Failed to fetch worker roles:");
-    }
-  };
 
   const handleClockOut = async () => {
     const result = await signOut();
     if (result.success) {
-      localStorage.removeItem("currentWorker"); // Clear worker name on logout
+      localStorage.removeItem("currentWorker");
       setIsClockOutModalOpen(false);
       navigate("/");
     } else {
@@ -75,22 +55,16 @@ function NavBar() {
       <div>
         <nav className="flex border-b-2 border-primary p-2 items-center justify-between">
           <p className="select-none font-monstserrat font-semibold bg-gray-300 px-2 shadow-lg rounded">
-            {userName}
+            {workerName}
           </p>
           <div className="flex gap-1">
-            <LinkButton buttonName="Dashboard" linkPath="/dashboard" />
-            {isCashier && (
-              <LinkButton buttonName="Point of Sale" linkPath="/pos" />
-            )}
-            {isInventoryManager && (
-              <LinkButton buttonName="Inventory" linkPath="/inventory" />
-            )}
-            {isSystemAdmin && (
+            {workerRoles?.map((role) => (
               <LinkButton
-                buttonName="User Management"
-                linkPath="/user_management"
+                key={role.TBL_ROLE.role_id}
+                buttonName={role.TBL_ROLE.role_name}
+                linkPath={role.TBL_ROLE.link}
               />
-            )}
+            ))}
 
             <button
               className="border rounded-sm border-primary px-2 py-1 cursor-pointer hover:bg-primary hover:text-secondary transition-colors"

@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import LaundryWeightSection from "../sections/LaundryWeightSection";
-import ProductSection from "../sections/ProductSection"
+import ProductSection from "../sections/ProductSection";
+import { LaundryWeights, SelectedServices } from "../types/laundry";
 
 function CashierPage() {
-  const [laundryWeights, setLaundryWeights] = useState<{
-    [name: string]: { value: number; limit: number };
-  }>({});
-  const [selectedServices, setSelectedServices] = useState<{
-    [name: string]: number;
-  }>({});
+  const [selectedServices, setSelectedServices] = useState<SelectedServices>(
+    {}
+  );
+  const [laundryWeights, setLaundryWeights] = useState<LaundryWeights>({});
   const [orderTotal, setOrderTotal] = useState<number>(0);
 
   // Calculate order summary and total
@@ -33,8 +32,17 @@ function CashierPage() {
     setOrderTotal(total);
   }, [laundryWeights, selectedServices]);
 
+  // Remove a service from the selectedServices list
+  const removeService = (serviceName: string) => {
+    setSelectedServices((prev) => {
+      const updated = { ...prev };
+      delete updated[serviceName];
+      return updated;
+    });
+  };
+
   return (
-    <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit">
+    <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-fit">
       <NavBar />
       <div className="flex justify-between items-center">
         <p className="font-michroma font-black text-3xl">POINT OF SALES</p>
@@ -50,15 +58,15 @@ function CashierPage() {
           </a>
         </div>
       </div>
-      <main className="flex gap-1">
+      <main className="flex gap-1 items-start">
         <div className="flex-1 flex flex-col gap-8 min-w-fit pr-4">
           <LaundryWeightSection
             setLaundryWeights={setLaundryWeights}
             setSelectedServices={setSelectedServices}
           />
-                    <ProductSection />
+          <ProductSection />
         </div>
-        <div className=" flex-1 flex flex-col p-2 py-0">
+        <div className="flex-1 flex flex-col p-2 py-0">
           <div className=" mb-4 ">
             <p className="font-bold text-3xl">Order</p>
             <div className=" p-4 rounded-lg flex flex-col gap-2">
@@ -69,8 +77,15 @@ function CashierPage() {
                   return (
                     <div
                       key={serviceName}
-                      className="p-2 border-2 rounded-md border-gray-300"
+                      className="relative p-2 border-2 rounded-md border-gray-300"
                     >
+                      {/* Remove Button */}
+                      <button
+                        className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                        onClick={() => removeService(serviceName)}
+                      >
+                        X
+                      </button>
                       <div className="flex justify-between items-center text-lg font-bold">
                         <p>{serviceName}</p>
                         <p>

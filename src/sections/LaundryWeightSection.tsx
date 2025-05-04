@@ -1,52 +1,40 @@
 import { useEffect, useState } from "react";
 import { getAllLaundryType, getAllServices } from "../lib/supabase";
-import { LaundryService, Service as ServiceType } from "../types/interface";
+import {
+  LaundryType,
+  LaundryWeights,
+  SelectedServices,
+  Service,
+} from "../types/laundry";
 
 interface Props {
-  setLaundryWeights: React.Dispatch<
-    React.SetStateAction<{ [name: string]: { value: number; limit: number } }>
-  >;
-  setSelectedServices: React.Dispatch<
-    React.SetStateAction<{ [name: string]: number }>
-  >;
+  setLaundryWeights: React.Dispatch<React.SetStateAction<LaundryWeights>>;
+  setSelectedServices: React.Dispatch<React.SetStateAction<SelectedServices>>;
 }
 
 function LaundryWeightSection({
   setLaundryWeights,
   setSelectedServices,
 }: Props) {
-  const [services, setServices] = useState<ServiceType[]>([]);
-  const [laundryType, setlaundryType] = useState<LaundryService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [laundryType, setlaundryType] = useState<LaundryType[]>([]);
 
   useEffect(() => {
     const fetchServices = async () => {
       const result = await getAllServices();
-      if (result && result.success) {
-        setServices(
-          (result.services || []).map((service) => ({
-            serviceKey: service.service_id as string,
-            serviceName: service.service_name as string,
-            servicePrice: service.price_per_limit as number,
-          }))
-        );
+      if (result.success) {
+        setServices(result.data || []);
       } else {
-        console.error("Failed to fetch services:", result?.error);
+        console.error("Failed to fetch services:", result.error);
       }
     };
 
     const fetchLaundryType = async () => {
       const result = await getAllLaundryType();
-      if (result && result.success) {
-        setlaundryType(
-          (result.services || []).map((laundry) => ({
-            laundryKey: laundry.type_id as string,
-            laundryName: laundry.cloth_name as string,
-            laundryLimit: laundry.limit as number,
-            weightUnit: laundry.weight_unit as string,
-          }))
-        );
+      if (result.success) {
+        setlaundryType(result.data || []);
       } else {
-        console.error("Failed to fetch services:", result?.error);
+        console.error("Failed to fetch services:", result.error);
       }
     };
 
@@ -92,37 +80,37 @@ function LaundryWeightSection({
   };
 
   return (
-    <div className="border-2 bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
+    <div className="bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
       <p className="text-2xl font-bold text-accent">Laundry Weight</p>
       <div className="flex gap-4">
         {laundryType.map((type) => (
-          <div key={type.laundryKey}>
-            <p>{type.laundryName}</p>
+          <div key={type.type_id}>
+            <p>{type.cloth_name}</p>
             <div className="flex gap-2 items-center">
               <input
                 type="number"
                 className="category-input p-2 rounded-md text-primary font-bold bg-secondary"
                 onChange={(e) =>
                   handleLaundryWeightChange(
-                    type.laundryName,
+                    type.cloth_name,
                     Number(e.target.value),
-                    Number(type.laundryLimit)
+                    Number(type.limit)
                   )
                 }
               />
             </div>
             <p>
-              {type.laundryLimit} {type.weightUnit} Max Limit
+              {type.limit} {type.weight_unit} Max Limit
             </p>
           </div>
         ))}
       </div>
-      <p className="text-3xl font-bold text-accent mt-4">Services</p>
+      <p className="text-2xl font-bold text-accent mt-4">Services</p>
       <div className="flex">
         <form className="flex gap-4">
           {services.map((service) => (
-            <div key={service.serviceKey}>
-              <p>₱ {service.servicePrice} per Limit</p>
+            <div key={service.service_id}>
+              <p>₱ {service.price_per_limit} per Max Limit</p>
               <div className="px-2 flex border-2 border-secondary rounded-md text-secondary p-1 gap-2">
                 <input
                   className="scale-150"
@@ -130,13 +118,13 @@ function LaundryWeightSection({
                   type="checkbox"
                   onChange={(e) => {
                     handleServiceChange(
-                      service.serviceName,
+                      service.service_name,
                       e.target.checked,
-                      service.servicePrice
+                      service.price_per_limit
                     );
                   }}
                 />
-                <p className="text-2xl">{service.serviceName}</p>
+                <p className="text-2xl">{service.service_name}</p>
               </div>
             </div>
           ))}

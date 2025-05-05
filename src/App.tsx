@@ -3,6 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import CashierPage from "./pages/CashierPage";
 import DashboardPage from "./pages/DashboardPage";
 import InventoryPage from "./pages/InventoryPage";
+import SystemManagementPage from "./pages/SystemManagementPage";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/pos" element={<CashierPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/system" element={<SystemManagementPage />} />
       </Routes>
     </Router>
   );

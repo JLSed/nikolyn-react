@@ -53,11 +53,11 @@ function NavBar() {
   return (
     <nav>
       <div>
-        <nav className="flex border-b-2 border-primary p-2 items-center justify-between">
+        <nav className="flex bg-primary shadow-md p-2 items-center justify-between">
           <p className="select-none font-monstserrat font-semibold bg-gray-300 px-2 shadow-lg rounded">
             {workerName}
           </p>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {workerRoles?.map((role) => (
               <LinkButton
                 key={role.TBL_ROLE.role_id}
@@ -67,7 +67,7 @@ function NavBar() {
             ))}
 
             <button
-              className="border rounded-sm border-primary px-2 py-1 cursor-pointer hover:bg-primary hover:text-secondary transition-colors"
+              className="border-2 rounded-md bg-secondary px-2 py-1 cursor-pointer hover:bg-red-500 hover:text-secondary hover:border-red-500 transition-colors"
               onClick={() => setIsClockOutModalOpen(true)}
             >
               Clock out

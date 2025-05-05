@@ -9,7 +9,7 @@ function LinkButton({ buttonName, linkPath }: LinkButtonProps) {
   const navigate = useNavigate();
   return (
     <button
-      className="border rounded-sm border-primary px-2 py-1 hover:bg-primary hover:text-secondary transition-colors"
+      className="border-2 rounded-md bg-secondary px-2 py-1 cursor-pointer hover:bg-primary hover:text-secondary transition-colors"
       onClick={() => navigate(linkPath)}
     >
       {buttonName}

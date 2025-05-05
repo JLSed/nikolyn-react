@@ -6,6 +6,7 @@ import {
 } from "react-icons/md";
 import { login } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
+import { IMAGE } from "../constants/images";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ function LoginPage() {
     setLoading(true);
     const result = await login(email, password);
     if (result.success) {
-      setError("Login successful! Redirecting...");
       navigate("/dashboard", { replace: true });
     } else if (result.message) {
       setError(result.message);
@@ -36,16 +36,21 @@ function LoginPage() {
 
   return (
     <main className="bg-secondary flex justify-between items-center h-svh">
+      <img src={IMAGE.wave} className="absolute bottom-0 right-0 left-0" />
       <div className="relative flex-1 h-full text-primary font-poppins font-bold">
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-center">
           <p className="text-4xl font-outfit">Nikolyn's Laundry Shop</p>
           <p className="text-7xl">Management System</p>
-          <MdLocalLaundryService className="text-9xl text-gray-400 absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -z-20" />
+          <img
+            src={IMAGE.logo}
+            alt=""
+            className=" absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -z-20 opacity-15 scale-75"
+          />
         </div>
       </div>
-      <div className="bg-primary text-secondary p-8 flex flex-col h-full gap-4 m-4 shadow-md">
+      <div className="bg-primary text-secondary p-8 flex flex-col h-full gap-4 m-4 shadow-md flex-1 max-w-96">
         <h2 className="text-3xl font-outfit font-semibold">Account Login</h2>
-        <form className="flex flex-col">
+        <form className="flex flex-col" onSubmit={handleLogin}>
           <label htmlFor="email" className="text-sm font-outfit">
             Email
           </label>
@@ -84,9 +89,8 @@ function LoginPage() {
             {error}
           </p>
           <button
-            className="bg-accent font-outfit font-semibold p-2 mt-4 rounded-md"
-            id="loginBtn"
-            onClick={handleLogin}
+            className="bg-accent hover:scale-105 transition-all font-outfit font-semibold p-2 mt-4 rounded-md"
+            type="submit"
             disabled={loading}
           >
             {loading ? "Logging in..." : "Login"}

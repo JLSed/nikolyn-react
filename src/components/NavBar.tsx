@@ -1,16 +1,25 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { signOut } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import LinkButton from "./LinkButton";
 import { getCurrentWorker } from "../lib/supabase";
 import { WorkerRole } from "../types/worker";
+import { GrSystem } from "react-icons/gr";
+import { MdPointOfSale, MdInventory, MdDashboard } from "react-icons/md";
+
+const iconMap: Record<string, ReactNode> = {
+  GrSystem: <GrSystem />,
+  MdPointOfSale: <MdPointOfSale />,
+  MdInventory: <MdInventory />,
+  MdDashboard: <MdDashboard />,
+};
 
 function NavBar() {
   const navigate = useNavigate();
   const [workerName, setworkerName] = useState("Nikolyn's Laundry Shop");
   const [workerRoles, setWorkerRoles] = useState<WorkerRole[] | undefined>([]);
   const [isClockOutModalOpen, setIsClockOutModalOpen] = useState(false);
-
+  const [currentTime, setCurrentTime] = useState("");
   useEffect(() => {
     const displayworkerName = async () => {
       const currentWorker = localStorage.getItem("currentWorker");
@@ -50,21 +59,37 @@ function NavBar() {
     }
   };
 
+  // Update the current time every second
+  useEffect(() => {
+    setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+  }, []);
+
   return (
-    <nav>
+    <nav className="sticky top-0 z-50 bg-primary shadow-md">
       <div>
-        <nav className="flex bg-primary shadow-md p-2 items-center justify-between">
-          <p className="select-none font-monstserrat font-semibold bg-gray-300 px-2 shadow-lg rounded">
-            {workerName}
-          </p>
+        <nav className="flex p-2 items-center justify-between">
+          <div className="flex items-center gap-2  shadow-lg  font-monstserrat font-semibold">
+            <p className="bg-gray-300 rounded select-none px-2 ">
+              {workerName}
+            </p>
+            <p className=" bg-gray-300 rounded select-none px-2 ">
+              {currentTime}
+            </p>
+          </div>
           <div className="flex gap-2">
-            {workerRoles?.map((role) => (
-              <LinkButton
-                key={role.TBL_ROLE.role_id}
-                buttonName={role.TBL_ROLE.role_name}
-                linkPath={role.TBL_ROLE.link}
-              />
-            ))}
+            {workerRoles?.map((role) => {
+              const icon = iconMap[role.TBL_ROLE.icon];
+              return (
+                <LinkButton
+                  key={role.TBL_ROLE.role_id}
+                  buttonName={role.TBL_ROLE.role_name}
+                  linkPath={role.TBL_ROLE.link}
+                  iconComponent={icon}
+                />
+              );
+            })}
 
             <button
               className="border-2 rounded-md bg-secondary px-2 py-1 cursor-pointer hover:bg-red-500 hover:text-secondary hover:border-red-500 transition-colors"

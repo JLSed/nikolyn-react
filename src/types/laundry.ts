@@ -18,17 +18,3 @@ export interface LaundryWeight {
 
 export type LaundryWeights = Record<string, LaundryWeight>;
 export type SelectedServices = Record<string, number>;
-
-// Frontend representation - can be moved to component files if needed
-export interface LaundryUIService {
-  serviceKey: string;
-  serviceName: string;
-  servicePrice: number;
-}
-
-export interface LaundryUIType {
-  laundryKey: string;
-  laundryName: string;
-  laundryLimit: number;
-  weightUnit: string;
-}

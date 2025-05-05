@@ -10,6 +10,7 @@ export interface WorkerRole {
     role_id: string;
     role_name: string;
     link: string;
+    icon: string;
   };
 }
 

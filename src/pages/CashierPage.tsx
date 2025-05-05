@@ -62,6 +62,7 @@ function CashierPage() {
         <div className="flex-1 flex flex-col gap-8 min-w-fit pr-4">
           <LaundryWeightSection
             setLaundryWeights={setLaundryWeights}
+            selectedServices={selectedServices}
             setSelectedServices={setSelectedServices}
           />
           <ProductSection />
@@ -149,7 +150,7 @@ function CashierPage() {
                 <p className="text-2xl">PHP {orderTotal}</p>
               </div>
             </div>
-            <button className="p-3 bg-orange-400 text-xl rounded-lg w-full">
+            <button className="p-3 bg-accent3 text-xl rounded-lg w-full">
               Complete Payment
             </button>
           </div>

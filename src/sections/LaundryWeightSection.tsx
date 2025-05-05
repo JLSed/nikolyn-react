@@ -9,11 +9,13 @@ import {
 
 interface Props {
   setLaundryWeights: React.Dispatch<React.SetStateAction<LaundryWeights>>;
+  selectedServices: SelectedServices;
   setSelectedServices: React.Dispatch<React.SetStateAction<SelectedServices>>;
 }
 
 function LaundryWeightSection({
   setLaundryWeights,
+  selectedServices,
   setSelectedServices,
 }: Props) {
   const [services, setServices] = useState<Service[]>([]);
@@ -116,6 +118,8 @@ function LaundryWeightSection({
                   className="scale-150"
                   value="Wash"
                   type="checkbox"
+                  // Control the checked state based on whether it's in selectedServices
+                  checked={!!selectedServices[service.service_name]}
                   onChange={(e) => {
                     handleServiceChange(
                       service.service_name,

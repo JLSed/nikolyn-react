@@ -101,14 +101,14 @@ function InventoryPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setIsAddItemModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-400 text-primary rounded"
+            className="flex items-center gap-2 px-4 py-2 bg-accent3 text-primary rounded"
           >
             <TbStackPush className="text-xl" />
             Add Product Item
           </button>
           <button
             onClick={() => setIsAddEntryModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-400 text-primary rounded"
+            className="flex items-center gap-2 px-4 py-2 bg-accent3 text-primary rounded"
           >
             <PiStackPlusFill />
             Add Product Entry
@@ -125,7 +125,28 @@ function InventoryPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-10">Loading inventory data...</div>
+          <div className="animate-pulse space-y-2 py-2">
+            {[...Array(4)].map((_, index) => (
+              <div
+                key={index}
+                className="bg-secondary text-primary mb-2 rounded-lg overflow-hidden"
+              >
+                <div className="grid grid-cols-4 py-3">
+                  <div className="flex items-center gap-2 px-2">
+                    <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
+                    <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+                  </div>
+                  <div className="h-5 bg-gray-300 rounded w-1/2 mx-auto"></div>
+                  <div className="h-5 bg-gray-300 rounded w-1/4 mx-auto"></div>
+                  <div className="h-5 bg-gray-300 rounded w-1/2 mx-auto"></div>
+                </div>
+                <div className="bg-gray-200 h-0.5 w-full"></div>
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent shimmer"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : filteredProducts.length > 0 ? (
           filteredProducts.map(([itemName, { item, entries }]) => (
             <div
@@ -156,7 +177,7 @@ function InventoryPage() {
 
               {expandedItems[itemName] && (
                 <div className="bg-[#c4c7c3] rounded-xl p-3 mb-2">
-                  <div className=" grid grid-cols-4 font-semibold text-[#804430] mb-1 text-sm pb-1 border-b border-gray-700">
+                  <div className=" grid grid-cols-4 font-semibold text-accent2 mb-1 text-sm pb-1 border-b border-gray-600">
                     <div>Batch</div>
                     <div>Purchase Date</div>
                     <div>Quantity</div>

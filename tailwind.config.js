@@ -7,6 +7,8 @@ export default {
         primary: "#0A4D9F",
         secondary: "#DBDDDA",
         accent: "#B59268",
+        accent2: "#804430",
+        accent3: "#fb923c",
       },
       fontFamily: {
         outfit: ["Outfit"],

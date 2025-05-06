@@ -1,19 +1,37 @@
 import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import LaundryWeightSection from "../sections/LaundryWeightSection";
-import ProductSection from "../sections/ProductSection";
+import ProductSection, { OrderProduct } from "../sections/ProductSection";
 import { LaundryWeights, SelectedServices } from "../types/laundry";
+import { toast, Toaster } from "react-hot-toast";
+import { ProductItemEntries } from "../types/inventory";
+import { getAllProducts } from "../lib/supabase";
 
 function CashierPage() {
   const [selectedServices, setSelectedServices] = useState<SelectedServices>(
     {}
   );
   const [laundryWeights, setLaundryWeights] = useState<LaundryWeights>({});
+  const [orderProducts, setOrderProducts] = useState<
+    Record<string, OrderProduct>
+  >({});
   const [orderTotal, setOrderTotal] = useState<number>(0);
+  const [products, setProducts] = useState<ProductItemEntries[]>([]);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const result = await getAllProducts();
+      if (result.success) {
+        setProducts(result.data || []);
+      }
+    };
+    fetchProducts();
+  }, []);
   // Calculate order summary and total
   useEffect(() => {
     let total = 0;
+
+    // Calculate services total
     Object.entries(selectedServices).forEach(([serviceName, servicePrice]) => {
       if (serviceName === "Full Service") {
         total += 100; // Fixed price for Full Service
@@ -29,8 +47,14 @@ function CashierPage() {
         total += serviceTotal;
       }
     });
+
+    // Add products total
+    Object.values(orderProducts).forEach((product) => {
+      total += product.price * product.quantity;
+    });
+
     setOrderTotal(total);
-  }, [laundryWeights, selectedServices]);
+  }, [laundryWeights, selectedServices, orderProducts]);
 
   // Remove a service from the selectedServices list
   const removeService = (serviceName: string) => {
@@ -41,8 +65,52 @@ function CashierPage() {
     });
   };
 
+  // Remove a product from order (decrease quantity by 1)
+  const removeProductFromOrder = (itemId: string) => {
+    const product = orderProducts[itemId];
+
+    if (!product) return;
+    // Update the products list by increasing the quantity
+    setProducts((prevProducts) => {
+      return prevProducts.map((p) => {
+        if (
+          p.TBL_PRODUCT_ITEM.item_id === itemId &&
+          p.entry_id === product.entry_id
+        ) {
+          return {
+            ...p,
+            quantity: (p.quantity || 0) + 1,
+          };
+        }
+        return p;
+      });
+    });
+
+    if (product.quantity > 1) {
+      // Decrease quantity by 1
+      setOrderProducts((prev) => ({
+        ...prev,
+        [itemId]: {
+          ...product,
+          quantity: product.quantity - 1,
+        },
+      }));
+    } else {
+      // Remove product entirely if quantity becomes 0
+      setOrderProducts((prev) => {
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
+      });
+    }
+
+    // Return the product to inventory
+    toast.success(`Returned ${product.item_name} to inventory`);
+  };
+
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-fit">
+      <Toaster position="top-right" />
       <NavBar />
       <div className="flex justify-between items-center">
         <p className="font-michroma font-black text-3xl">POINT OF SALES</p>
@@ -65,12 +133,18 @@ function CashierPage() {
             selectedServices={selectedServices}
             setSelectedServices={setSelectedServices}
           />
-          <ProductSection />
+          <ProductSection
+            products={products}
+            setProducts={setProducts}
+            orderProducts={orderProducts}
+            setOrderProducts={setOrderProducts}
+          />
         </div>
         <div className="flex-1 flex flex-col p-2 py-0">
-          <div className=" mb-4 ">
+          <div className="mb-4">
             <p className="font-bold text-3xl">Order</p>
-            <div className=" p-4 rounded-lg flex flex-col gap-2">
+            <div className="p-4 rounded-lg flex flex-col gap-2">
+              {/* Services Section */}
               {Object.entries(selectedServices).map(
                 ([serviceName, servicePrice]) => {
                   let serviceTotal = 0;
@@ -140,6 +214,32 @@ function CashierPage() {
                   );
                 }
               )}
+
+              {/* Products Section */}
+              {Object.values(orderProducts).map((product) => (
+                <div
+                  key={product.item_id}
+                  className="relative p-2 border-2 rounded-md border-gray-300"
+                >
+                  {/* Remove Button */}
+                  <button
+                    className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                    onClick={() => removeProductFromOrder(product.item_id)}
+                  >
+                    X
+                  </button>
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <p>{product.item_name}</p>
+                    <p>TOTAL {product.price * product.quantity}</p>
+                  </div>
+                  <ul>
+                    <li className="flex justify-between">
+                      - {product.quantity} x ₱{product.price}{" "}
+                      <span>₱{product.price * product.quantity}</span>
+                    </li>
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
           <div className="">

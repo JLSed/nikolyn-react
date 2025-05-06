@@ -96,6 +96,7 @@ export async function getAllProducts(): Promise<
       quantity,
       TBL_PRODUCT_ITEM (
         item_name,
+        item_id,
         price,
         barcode,
         category,

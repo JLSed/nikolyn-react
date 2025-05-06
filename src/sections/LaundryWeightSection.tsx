@@ -20,15 +20,18 @@ function LaundryWeightSection({
 }: Props) {
   const [services, setServices] = useState<Service[]>([]);
   const [laundryType, setlaundryType] = useState<LaundryType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchServices = async () => {
+      setIsLoading(true);
       const result = await getAllServices();
       if (result.success) {
         setServices(result.data || []);
       } else {
         console.error("Failed to fetch services:", result.error);
       }
+      setIsLoading(false);
     };
 
     const fetchLaundryType = async () => {
@@ -128,7 +131,13 @@ function LaundryWeightSection({
                     );
                   }}
                 />
-                <p className="text-2xl">{service.service_name}</p>
+                {isLoading ? (
+                  <div className="w-full relative overflow-hidden p-4 mx-2 bg-gray-400/40 rounded-md">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent shimmer"></div>
+                  </div>
+                ) : (
+                  <p className="text-2xl">{service.service_name}</p>
+                )}
               </div>
             </div>
           ))}

@@ -4,6 +4,7 @@ import CashierPage from "./pages/CashierPage";
 import DashboardPage from "./pages/DashboardPage";
 import InventoryPage from "./pages/InventoryPage";
 import SystemManagementPage from "./pages/SystemManagementPage";
+import OrderLogPage from "./pages/OrderLogPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/pos" element={<CashierPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/system" element={<SystemManagementPage />} />
+        <Route path="/order-log" element={<OrderLogPage />} />
       </Routes>
     </Router>
   );

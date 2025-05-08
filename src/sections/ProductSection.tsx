@@ -137,7 +137,7 @@ function ProductSection({
                 </td>
                 <td className="p-2">{product.quantity}</td>
                 <td className="relative p-2 overflow-hidden">
-                  ₱{product.TBL_PRODUCT_ITEM.price}
+                  ₱{product.TBL_PRODUCT_ITEM.price.toFixed(2)}
                   <button
                     className="absolute right-0 top-0 h-full flex justify-center items-center gap-4 px-4 rounded-tl-full rounded-bl-full bg-primary text-secondary transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"
                     onClick={() => addToOrder(product)}

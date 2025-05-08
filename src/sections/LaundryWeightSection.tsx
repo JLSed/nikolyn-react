@@ -2,25 +2,27 @@ import { useEffect, useState } from "react";
 import { getAllLaundryType, getAllServices } from "../lib/supabase";
 import {
   LaundryType,
-  LaundryWeights,
+  LaundryWeight,
   SelectedServices,
   Service,
 } from "../types/laundry";
 
 interface Props {
-  setLaundryWeights: React.Dispatch<React.SetStateAction<LaundryWeights>>;
   selectedServices: SelectedServices;
   setSelectedServices: React.Dispatch<React.SetStateAction<SelectedServices>>;
 }
 
 function LaundryWeightSection({
-  setLaundryWeights,
   selectedServices,
   setSelectedServices,
 }: Props) {
   const [services, setServices] = useState<Service[]>([]);
-  const [laundryType, setlaundryType] = useState<LaundryType[]>([]);
+  const [laundryType, setLaundryType] = useState<LaundryType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // New state for laundry weights
+  const [laundryWeights, setLaundryWeights] = useState<
+    Record<string, { value: number; limit: number }>
+  >({});
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -37,9 +39,9 @@ function LaundryWeightSection({
     const fetchLaundryType = async () => {
       const result = await getAllLaundryType();
       if (result.success) {
-        setlaundryType(result.data || []);
+        setLaundryType(result.data || []);
       } else {
-        console.error("Failed to fetch services:", result.error);
+        console.error("Failed to fetch laundry types:", result.error);
       }
     };
 
@@ -47,23 +49,67 @@ function LaundryWeightSection({
     fetchServices();
   }, []);
 
+  // Handle input changes for laundry weights
   const handleLaundryWeightChange = (
     laundryName: string,
     value: number,
     limit: number
   ) => {
     setLaundryWeights((prev) => {
-      // Create a new object with all previous non-zero values
-      const updated = { ...prev, [laundryName]: { value, limit } };
-      // Remove keys with falsy (zero, NaN, undefined) values
-      Object.keys(updated).forEach((name) => {
-        if (!updated[name]) {
-          delete updated[name];
-        }
-      });
+      const updated = { ...prev };
+
+      // Only include weights with values > 0
+      if (value > 0) {
+        updated[laundryName] = { value, limit };
+      } else {
+        // Remove if value is 0 or negative
+        delete updated[laundryName];
+      }
+
       return updated;
     });
   };
+
+  useEffect(() => {
+    if (
+      Object.keys(selectedServices).length === 0 ||
+      Object.keys(laundryWeights).length === 0
+    ) {
+      return;
+    }
+
+    const serviceNames = Object.keys(selectedServices);
+
+    const updatedServices: SelectedServices = {};
+
+    serviceNames.forEach((serviceName) => {
+      const price =
+        services.find((s) => s.service_name === serviceName)?.price_per_limit ||
+        0;
+      const newLaundryWeights: Record<string, LaundryWeight> = {};
+      let sub_total = 0;
+      if (serviceName === "Full Service") {
+        sub_total = price; // Fixed price for full service
+      } else {
+        Object.entries(laundryWeights).forEach(([name, { value, limit }]) => {
+          newLaundryWeights[name] = {
+            value,
+            limit,
+            laundry_total: calculateLaundryTotal(price, value, limit),
+          };
+        });
+        sub_total = calculateSubTotal(price, newLaundryWeights);
+      }
+
+      updatedServices[serviceName] = {
+        laundryWeights: newLaundryWeights,
+        sub_total,
+        service_price: price,
+      };
+    });
+
+    setSelectedServices(updatedServices);
+  }, [laundryWeights, services]);
 
   const handleServiceChange = (
     serviceName: string,
@@ -71,10 +117,35 @@ function LaundryWeightSection({
     price: number
   ) => {
     if (checked) {
-      setSelectedServices((prev) => ({
-        ...prev,
-        [serviceName]: price,
-      }));
+      setSelectedServices((prev) => {
+        const newLaundryWeights: Record<string, LaundryWeight> = {};
+        if (serviceName === "Full Service") {
+          return {
+            ...prev,
+            [serviceName]: {
+              sub_total: price, // Fixed price for full service
+              service_price: price,
+              laundryWeights: {},
+            },
+          };
+        }
+        Object.entries(laundryWeights).forEach(([name, { value, limit }]) => {
+          newLaundryWeights[name] = {
+            value,
+            limit,
+            laundry_total: calculateLaundryTotal(price, value, limit),
+          };
+        });
+
+        return {
+          ...prev,
+          [serviceName]: {
+            sub_total: calculateSubTotal(price, newLaundryWeights),
+            service_price: price,
+            laundryWeights: newLaundryWeights,
+          },
+        };
+      });
     } else {
       setSelectedServices((prev) => {
         const updated = { ...prev };
@@ -83,6 +154,29 @@ function LaundryWeightSection({
       });
     }
   };
+
+  function calculateLaundryTotal(
+    price: number,
+    value: number,
+    limit: number
+  ): number {
+    if (value > 0 && limit > 0) {
+      const loads = Math.ceil(value / limit);
+      return loads * price;
+    }
+    return 0;
+  }
+
+  function calculateSubTotal(
+    price: number,
+    laundryWeights: Record<string, { value: number; limit: number }>
+  ) {
+    let sub_total = 0;
+    Object.values(laundryWeights).forEach((data) => {
+      sub_total += calculateLaundryTotal(price, data.value, data.limit);
+    });
+    return sub_total;
+  }
 
   return (
     <div className="bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
@@ -95,6 +189,7 @@ function LaundryWeightSection({
               <input
                 type="number"
                 className="category-input p-2 rounded-md text-primary font-bold bg-secondary"
+                value={laundryWeights[type.cloth_name]?.value || ""}
                 onChange={(e) =>
                   handleLaundryWeightChange(
                     type.cloth_name,

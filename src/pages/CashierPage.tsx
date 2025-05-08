@@ -2,21 +2,27 @@ import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import LaundryWeightSection from "../sections/LaundryWeightSection";
 import ProductSection, { OrderProduct } from "../sections/ProductSection";
-import { LaundryWeights, SelectedServices } from "../types/laundry";
+import { SelectedServices } from "../types/laundry";
 import { toast, Toaster } from "react-hot-toast";
 import { ProductItemEntries } from "../types/inventory";
-import { getAllProducts } from "../lib/supabase";
+import { getAllProducts, createOrder } from "../lib/supabase";
+import { BsCash } from "react-icons/bs";
+import { IMAGE } from "../constants/images";
+import { AiOutlineAudit } from "react-icons/ai";
+import { useNavigate } from "react-router-dom";
 
 function CashierPage() {
+  const navigate = useNavigate();
   const [selectedServices, setSelectedServices] = useState<SelectedServices>(
     {}
   );
-  const [laundryWeights, setLaundryWeights] = useState<LaundryWeights>({});
   const [orderProducts, setOrderProducts] = useState<
     Record<string, OrderProduct>
   >({});
   const [orderTotal, setOrderTotal] = useState<number>(0);
   const [products, setProducts] = useState<ProductItemEntries[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -27,36 +33,26 @@ function CashierPage() {
     };
     fetchProducts();
   }, []);
-  // Calculate order summary and total
+
   useEffect(() => {
     let total = 0;
 
     // Calculate services total
-    Object.entries(selectedServices).forEach(([serviceName, servicePrice]) => {
+    Object.entries(selectedServices).forEach(([serviceName, data]) => {
       if (serviceName === "Full Service") {
-        total += 100; // Fixed price for Full Service
+        total += data.service_price;
       } else {
-        let serviceTotal = 0;
-        Object.entries(laundryWeights).forEach(([_, data]) => {
-          if (data.value > 0 && data.limit > 0) {
-            const loads = Math.ceil(data.value / data.limit);
-            const subTotal = loads * servicePrice;
-            serviceTotal += subTotal;
-          }
-        });
-        total += serviceTotal;
+        total += data.sub_total;
       }
     });
 
-    // Add products total
     Object.values(orderProducts).forEach((product) => {
       total += product.price * product.quantity;
     });
 
     setOrderTotal(total);
-  }, [laundryWeights, selectedServices, orderProducts]);
+  }, [selectedServices, orderProducts]);
 
-  // Remove a service from the selectedServices list
   const removeService = (serviceName: string) => {
     setSelectedServices((prev) => {
       const updated = { ...prev };
@@ -65,12 +61,10 @@ function CashierPage() {
     });
   };
 
-  // Remove a product from order (decrease quantity by 1)
   const removeProductFromOrder = (itemId: string) => {
     const product = orderProducts[itemId];
 
     if (!product) return;
-    // Update the products list by increasing the quantity
     setProducts((prevProducts) => {
       return prevProducts.map((p) => {
         if (
@@ -87,7 +81,6 @@ function CashierPage() {
     });
 
     if (product.quantity > 1) {
-      // Decrease quantity by 1
       setOrderProducts((prev) => ({
         ...prev,
         [itemId]: {
@@ -96,7 +89,6 @@ function CashierPage() {
         },
       }));
     } else {
-      // Remove product entirely if quantity becomes 0
       setOrderProducts((prev) => {
         const updated = { ...prev };
         delete updated[itemId];
@@ -104,8 +96,57 @@ function CashierPage() {
       });
     }
 
-    // Return the product to inventory
     toast.success(`Returned ${product.item_name} to inventory`);
+  };
+
+  const handleCompletePayment = async () => {
+    if (
+      Object.keys(selectedServices).length === 0 &&
+      Object.keys(orderProducts).length === 0
+    ) {
+      toast.error("Please add services or products to your order");
+      return;
+    }
+
+    // Ensure payment method is selected
+    if (!paymentMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const result = await createOrder(
+        orderTotal,
+        paymentMethod,
+        orderProducts,
+        selectedServices
+      );
+
+      if (result.success) {
+        toast.success("Payment completed successfully!");
+
+        // Reset order state
+        setSelectedServices({});
+        setOrderProducts({});
+        setOrderTotal(0);
+
+        // Refresh product inventory
+        const productsResult = await getAllProducts();
+        if (productsResult.success) {
+          setProducts(productsResult.data || []);
+        }
+      } else {
+        toast.error("Failed to process payment. Please try again.");
+        console.error("Error creating order:", result.error);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error("Exception in payment processing:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -115,21 +156,18 @@ function CashierPage() {
       <div className="flex justify-between items-center">
         <p className="font-michroma font-black text-3xl">POINT OF SALES</p>
         <div className="flex gap-2 pr-2">
-          <a href="" className="border-2 border-primary px-2 py-1">
-            Ongoing
-          </a>
-          <a href="" className="border-2 border-primary px-2 py-1">
-            Completed
-          </a>
-          <a href="" className="border-2 border-primary px-2 py-1">
-            Cancelled
-          </a>
+          <button
+            onClick={() => navigate("/order-log")}
+            className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+          >
+            <AiOutlineAudit />
+            Order Log
+          </button>
         </div>
       </div>
       <main className="flex gap-1 items-start">
         <div className="flex-1 flex flex-col gap-8 min-w-fit pr-4">
           <LaundryWeightSection
-            setLaundryWeights={setLaundryWeights}
             selectedServices={selectedServices}
             setSelectedServices={setSelectedServices}
           />
@@ -145,83 +183,54 @@ function CashierPage() {
             <p className="font-bold text-3xl">Order</p>
             <div className="p-4 rounded-lg flex flex-col gap-2">
               {/* Services Section */}
-              {Object.entries(selectedServices).map(
-                ([serviceName, servicePrice]) => {
-                  let serviceTotal = 0;
-                  const isFullService = serviceName === "Full Service";
-                  return (
-                    <div
-                      key={serviceName}
-                      className="relative p-2 border-2 rounded-md border-gray-300"
+              {Object.entries(selectedServices).map(([serviceName]) => {
+                const isFullService = serviceName === "Full Service";
+                return (
+                  <div
+                    key={serviceName}
+                    className="relative p-2 border-2 rounded-md border-gray-300"
+                  >
+                    {/* Remove Button */}
+                    <button
+                      className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      onClick={() => removeService(serviceName)}
                     >
-                      {/* Remove Button */}
-                      <button
-                        className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                        onClick={() => removeService(serviceName)}
-                      >
-                        X
-                      </button>
-                      <div className="flex justify-between items-center text-lg font-bold">
-                        <p>{serviceName}</p>
-                        <p>
-                          TOTAL{" "}
-                          {isFullService
-                            ? 100
-                            : Object.entries(laundryWeights).reduce(
-                                (sum, [_, data]) => {
-                                  if (data.value > 0 && data.limit > 0) {
-                                    const loads = Math.ceil(
-                                      data.value / data.limit
-                                    );
-                                    const subTotal = loads * servicePrice;
-                                    serviceTotal += subTotal;
-                                    return sum + subTotal;
-                                  }
-                                  return sum;
-                                },
-                                0
-                              )}
-                        </p>
-                      </div>
-                      <ul>
-                        {isFullService ? (
-                          <li className="flex justify-between">
-                            - Fixed Price <span>100</span>
-                          </li>
-                        ) : (
-                          Object.entries(laundryWeights).map(
-                            ([laundryName, data]) => {
-                              if (data.value > 0 && data.limit > 0) {
-                                const loads = Math.ceil(
-                                  data.value / data.limit
-                                );
-                                const subTotal = loads * servicePrice;
-                                return (
-                                  <li
-                                    key={laundryName}
-                                    className="flex justify-between"
-                                  >
-                                    - {laundryName} <span>{subTotal}</span>
-                                  </li>
-                                );
-                              }
-                              return null;
-                            }
-                          )
-                        )}
-                      </ul>
+                      X
+                    </button>
+                    <div className="flex justify-between items-center text-lg font-bold">
+                      <p>{serviceName}</p>
+                      <p>
+                        TOTAL{" "}
+                        {selectedServices[serviceName].sub_total.toFixed(2)}
+                      </p>
                     </div>
-                  );
-                }
-              )}
+                    <ul key={serviceName}>
+                      {isFullService ? (
+                        <li className="flex justify-between">
+                          - Fixed Price{" "}
+                          <span>{selectedServices[serviceName].sub_total}</span>
+                        </li>
+                      ) : (
+                        Object.entries(
+                          selectedServices[serviceName].laundryWeights
+                        ).map(([laundryName, data]) => (
+                          <li key={laundryName}>
+                            <span>
+                              {laundryName} - {data.laundry_total}
+                            </span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                );
+              })}
 
-              {/* Products Section */}
               {Object.values(orderProducts).map((product) => (
                 <div
                   key={product.item_id}
                   className="relative p-2 border-2 rounded-md border-gray-300"
                 >
-                  {/* Remove Button */}
                   <button
                     className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
                     onClick={() => removeProductFromOrder(product.item_id)}
@@ -234,12 +243,21 @@ function CashierPage() {
                   </div>
                   <ul>
                     <li className="flex justify-between">
-                      - {product.quantity} x ₱{product.price}{" "}
-                      <span>₱{product.price * product.quantity}</span>
+                      - {product.quantity} x ₱ {product.price.toFixed(2)}{" "}
+                      <span>
+                        ₱ {(product.price * product.quantity).toFixed(2)}
+                      </span>
                     </li>
                   </ul>
                 </div>
               ))}
+
+              {Object.keys(selectedServices).length === 0 &&
+                Object.keys(orderProducts).length === 0 && (
+                  <div className="text-center p-4 text-gray-500">
+                    No items in order. Add services or products to proceed.
+                  </div>
+                )}
             </div>
           </div>
           <div className="">
@@ -247,11 +265,58 @@ function CashierPage() {
             <div className="my-2 bg-gray-300 p-4 rounded-lg flex flex-col">
               <div className="flex justify-between">
                 <p className="text-2xl">Total </p>
-                <p className="text-2xl">PHP {orderTotal}</p>
+                <p className="text-2xl">PHP {orderTotal.toFixed(2)}</p>
               </div>
             </div>
-            <button className="p-3 bg-accent3 text-xl rounded-lg w-full">
-              Complete Payment
+            <p className="font-bold text-3xl">Payment Method</p>
+            <div className="flex justify-between gap-4">
+              <label
+                className={`my-2 p-4 rounded-lg flex-1 flex items-center justify-center gap-2 text-2xl cursor-pointer ${
+                  paymentMethod === "Cash"
+                    ? "bg-accent text-secondary"
+                    : "bg-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="Cash"
+                  checked={paymentMethod === "Cash"}
+                  onChange={() => setPaymentMethod("Cash")}
+                  className="hidden"
+                />
+                <BsCash />
+                <p className="font-bold">Cash</p>
+              </label>
+
+              <label
+                className={`my-2 p-4 rounded-lg flex-1 flex items-center justify-center cursor-pointer ${
+                  paymentMethod === "GCash"
+                    ? "bg-accent text-secondary"
+                    : "bg-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="GCash"
+                  checked={paymentMethod === "GCash"}
+                  onChange={() => setPaymentMethod("GCash")}
+                  className="hidden"
+                />
+                <img src={IMAGE.GcashLogo} alt="GCash" />
+              </label>
+            </div>
+            <button
+              className={`p-3 text-xl rounded-lg w-full ${
+                isProcessing
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-accent3 hover:bg-orange-500 transition-colors"
+              }`}
+              onClick={handleCompletePayment}
+              disabled={isProcessing || orderTotal <= 0}
+            >
+              {isProcessing ? "Processing..." : "Complete Payment"}
             </button>
           </div>
         </div>

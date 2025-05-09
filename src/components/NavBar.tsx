@@ -80,12 +80,12 @@ function NavBar() {
           </div>
           <div className="flex gap-2">
             {workerRoles?.map((role) => {
-              const icon = iconMap[role.TBL_ROLE.icon];
+              const icon = iconMap[role.icon];
               return (
                 <LinkButton
-                  key={role.TBL_ROLE.role_id}
-                  buttonName={role.TBL_ROLE.role_name}
-                  linkPath={role.TBL_ROLE.link}
+                  key={role.role_id}
+                  buttonName={role.access_page}
+                  linkPath={role.link}
                   iconComponent={icon}
                 />
               );

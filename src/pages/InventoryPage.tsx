@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import AddProductEntryModal from "../components/AddProductEntryModal";
-import SuccessNotification from "../components/SuccessNotification";
 import { PiStackPlusFill } from "react-icons/pi";
 import { TbStackPush } from "react-icons/tb";
 import AddProductItemModal from "../components/AddProductItemModal";
@@ -9,14 +8,11 @@ import { getAllProducts } from "../lib/supabase";
 import { ProductItemEntries } from "../types/inventory";
 import { FaSearch, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { AiOutlineBarcode } from "react-icons/ai";
+import toast, { Toaster } from "react-hot-toast";
 
 function InventoryPage() {
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState({
-    message: "",
-    isVisible: false,
-  });
   const [products, setProducts] = useState<ProductItemEntries[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
@@ -55,17 +51,11 @@ function InventoryPage() {
   };
 
   const handleAddEntrySuccess = () => {
-    setShowSuccess({
-      message: "New entry added successfully!",
-      isVisible: true,
-    });
+    toast.success("New entry added successfully!");
   };
 
   const handleAddItemSuccess = () => {
-    setShowSuccess({
-      message: "New item added successfully!",
-      isVisible: true,
-    });
+    toast.success("New item added successfully!");
   };
 
   const toggleExpandItem = (itemName: string) => {
@@ -82,6 +72,7 @@ function InventoryPage() {
 
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-svh overflow-hidden">
+      <Toaster position="top-right" />
       <NavBar />
       <div className="flex justify-between items-center">
         <p className="font-michroma font-black text-3xl">INVENTORY</p>
@@ -229,12 +220,6 @@ function InventoryPage() {
         onClose={() => setIsAddEntryModalOpen(false)}
         onProductAdded={handleProductAdded}
         onSuccess={handleAddEntrySuccess}
-      />
-
-      <SuccessNotification
-        message={showSuccess.message}
-        isVisible={showSuccess.isVisible}
-        onHide={() => setShowSuccess({ message: "", isVisible: false })}
       />
     </main>
   );

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ApiResponse } from "../types/api";
-import { Worker, WorkerRole } from "../types/worker";
+import { Worker, WorkerRole, WorkerWithRoles } from "../types/worker";
 import { LaundryType, SelectedServices, Service } from "../types/laundry";
 import {
   ProductEntry,
@@ -57,12 +57,15 @@ export async function getAllWorkerRoles(
     .from("TBL_WORKER_ROLE")
     .select("TBL_ROLE (*)")
     .eq("employee_id", employee_id)) as {
-    data: WorkerRole[] | null;
+    data: { TBL_ROLE: WorkerRole }[] | null;
     error: any;
   };
 
   if (error || !data) return { success: false, error: error };
-  return { success: true, data: data };
+  const transformedData = data.map((item) => ({
+    ...item.TBL_ROLE,
+  }));
+  return { success: true, data: transformedData };
 }
 
 export async function getAllServices(): Promise<ApiResponse<Service[]>> {
@@ -175,7 +178,7 @@ export async function createOrder(
   payment_method: string,
   products: Record<string, OrderProduct>,
   services: SelectedServices,
-    customer_name: string,
+  customer_name: string
 ): Promise<ApiResponse<string>> {
   try {
     // 1. Insert the order
@@ -187,7 +190,7 @@ export async function createOrder(
           payment_method,
           products,
           services,
-            customer_name,
+          customer_name,
         },
       ])
       .select("order_id");
@@ -223,7 +226,6 @@ export async function createOrder(
     return { success: false, error };
   }
 }
-
 
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
   try {
@@ -273,86 +275,85 @@ export async function updateOrderStatus(
   }
 }
 
-// Get all workers with their roles
 export async function getAllWorkers(): Promise<ApiResponse<WorkerWithRoles[]>> {
   try {
-    // First, get all workers
-    const { data: workers, error: workersError } = await supabase
+    const { data: workers, error: workersError } = (await supabase
       .from("TBL_WORKER")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })) as {
+      data: Worker[] | null;
+      error: any;
+    };
 
     if (workersError) {
       throw workersError;
     }
+    if (workers !== null) {
+      const workersWithRoles = await Promise.all(
+        workers.map(async (worker) => {
+          const { data: rolesData, error: rolesError } = (await supabase
+            .from("TBL_WORKER_ROLE")
+            .select("TBL_ROLE(*)")
+            .eq("employee_id", worker.employee_id)) as {
+            data: { TBL_ROLE: WorkerRole }[] | null;
+            error: any;
+          };
+          const roles = rolesData
+            ? rolesData.map((item) => item.TBL_ROLE)
+            : null;
+          if (rolesError) {
+            console.error(
+              `Error fetching roles for worker ${worker.employee_id}:`,
+              rolesError
+            );
+            return { worker, worker_roles: [] };
+          }
 
-    // For each worker, get their roles
-    const workersWithRoles = await Promise.all(
-      workers.map(async (worker) => {
-        const { data: roles, error: rolesError } = await supabase
-          .from("TBL_WORKER_ROLE")
-          .select("*, TBL_ROLE(*)")
-          .eq("employee_id", worker.employee_id);
-
-        if (rolesError) {
-          console.error(
-            `Error fetching roles for worker ${worker.employee_id}:`,
-            rolesError
-          );
-          return { ...worker, roles: [] };
-        }
-
-        return { ...worker, roles: roles || [] };
-      })
-    );
-
-    return { success: true, data: workersWithRoles };
+          return { worker, worker_roles: roles || [] };
+        })
+      );
+      return { success: true, data: workersWithRoles };
+    }
   } catch (error) {
     console.error("Error fetching workers:", error);
     return { success: false, error };
   }
+  return { success: false, error: "No workers found" };
 }
 
 // Get all available roles
-export async function getAllRoles(): Promise<ApiResponse<Role[]>> {
-  try {
-    const { data, error } = await supabase
-      .from("TBL_ROLE")
-      .select("*")
-      .order("role_name");
-
-    if (error) {
-      throw error;
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error fetching roles:", error);
-    return { success: false, error };
+export async function getAllRoles(): Promise<ApiResponse<WorkerRole[]>> {
+  const { data, error } = (await supabase
+    .from("TBL_ROLE")
+    .select("*")
+    .order("role_name")) as {
+    data: WorkerRole[] | null;
+    error: any;
+  };
+  if (error) {
+    throw error;
   }
+
+  if (error || !data) return { success: false, error: error };
+  return { success: true, data: data };
 }
 
 // Update worker information
 export async function updateWorker(
   employee_id: string,
   updates: Partial<Worker>
-): Promise<ApiResponse<Worker>> {
-  try {
-    const { data, error } = await supabase
-      .from("TBL_WORKER")
-      .update(updates)
-      .eq("employee_id", employee_id)
-      .select();
+): Promise<ApiResponse<string[]>> {
+  const { data, error } = (await supabase
+    .from("TBL_WORKER")
+    .update(updates)
+    .eq("employee_id", employee_id)
+    .select()) as {
+    data: string[] | null;
+    error: any;
+  };
 
-    if (error) {
-      throw error;
-    }
-
-    return { success: true, data: data[0] };
-  } catch (error) {
-    console.error("Error updating worker:", error);
-    return { success: false, error };
-  }
+  if (error || !data) return { success: false, error: error };
+  return { success: true, data: data };
 }
 
 // Update worker roles (remove existing ones and add new ones)
@@ -361,7 +362,6 @@ export async function updateWorkerRoles(
   role_ids: string[]
 ): Promise<ApiResponse<any>> {
   try {
-
     // 1. Delete existing roles
     const { error: deleteError } = await supabase
       .from("TBL_WORKER_ROLE")

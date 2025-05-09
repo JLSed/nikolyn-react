@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import NavBar from "../components/NavBar";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaFilter } from "react-icons/fa6";
+import { FaArrowLeft, FaFileExport, FaFilter } from "react-icons/fa6";
 import { getAllOrders, updateOrderStatus } from "../lib/supabase";
 import { MdSearch } from "react-icons/md";
 
@@ -47,7 +47,16 @@ function OrderLogPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
+  const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+  const [dateRange, setDateRange] = useState({
+    startDate: today,
+    endDate: today,
+  });
+  const [dateFilterMode, setDateFilterMode] = useState<"single" | "range">(
+    "single"
+  );
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   // Fetch orders data
   useEffect(() => {
     const fetchOrders = async () => {
@@ -68,12 +77,16 @@ function OrderLogPage() {
 
   // Filter orders based on search term and status filter
   const filteredOrders = orders.filter((order) => {
+    const orderDate = new Date(order.created_at).toISOString().split("T")[0];
     const matchesSearch = order.customer_name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "ALL" || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesDate =
+      orderDate >= dateRange.startDate && orderDate <= dateRange.endDate;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   // Open modal with selected order
@@ -114,7 +127,6 @@ function OrderLogPage() {
     setIsProcessing(false);
   };
 
-
   // Update order status to complete
   const handleCancelOrder = async () => {
     if (!selectedOrder) return;
@@ -152,6 +164,55 @@ function OrderLogPage() {
     return new Date(dateString).toLocaleString();
   };
 
+  const resetDateToToday = () => {
+    setDateRange({
+      startDate: today,
+      endDate: today,
+    });
+  };
+
+  const exportToCSV = () => {
+    if (filteredOrders.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+    try {
+      const headers = ["Order ID", "Customer", "Date", "Amount", "Status"];
+
+      const csvRows = filteredOrders.map((order) => [
+        order.order_id,
+        order.customer_name || "Walk-in Customer",
+        new Date(order.created_at).toDateString(),
+        order.total_amount.toFixed(2),
+        order.status,
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...csvRows.map((row) => row.join(",")),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      // Set up and trigger download
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `orders_logs_${new Date().toISOString().slice(0, 10)}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Orders exported to CSV");
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Failed to export orders");
+    }
+  };
+
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-fit min-h-screen">
       <Toaster position="top-right" />
@@ -171,31 +232,186 @@ function OrderLogPage() {
 
       <div className="px-4 py-2">
         {/* Search and Filter Controls */}
-        <div className="flex flex-wrap gap-4 mb-4">
-          <div className="relative flex-1 max-w-md">
-            <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by customer name..."
-              className="pl-10 p-2 w-full rounded-lg bg-white border border-primary"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="mb-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by customer name..."
+                className="pl-10 p-2 w-full rounded-lg bg-white border border-primary"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <FaFilter /> {isFilterMenuOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+
+            <button
+              onClick={exportToCSV}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <FaFileExport /> Export to CSV
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <FaFilter className="text-primary" />
-            <select
-              className="p-2 rounded-lg bg-white border border-primary"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="COMPLETE">Complete</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-          </div>
+          {/* Collapsible Filter Menu */}
+          {isFilterMenuOpen && (
+            <div className="mt-4 p-4 bg-white rounded-lg shadow-md border border-gray-200 animate-fadeIn">
+              <h3 className="font-bold text-lg mb-3 text-primary">
+                Filter Orders
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <label className="font-medium text-primary">Status:</label>
+                  <select
+                    className="p-2 w-full rounded-lg bg-white border border-primary"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="ALL">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="COMPLETE">Complete</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                </div>
+
+                {/* Date Filter Mode */}
+                <div className="space-y-2">
+                  <label className="font-medium text-primary">
+                    Date Filter Type:
+                  </label>
+                  <select
+                    className="p-2 w-full rounded-lg bg-white border border-primary"
+                    value={dateFilterMode}
+                    onChange={(e) =>
+                      setDateFilterMode(e.target.value as "single" | "range")
+                    }
+                  >
+                    <option value="single">Single Date</option>
+                    <option value="range">Date Range</option>
+                  </select>
+                </div>
+
+                {/* Date Selector(s) */}
+                <div className="space-y-2 md:col-span-2">
+                  {dateFilterMode === "single" ? (
+                    <div className="flex flex-col space-y-2">
+                      <label className="font-medium text-primary">
+                        Select Date:
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          className="flex-1 p-2 rounded-lg bg-white border border-primary"
+                          value={selectedDate}
+                          onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            setDateRange({
+                              startDate: e.target.value,
+                              endDate: e.target.value,
+                            });
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            setSelectedDate(today);
+                            setDateRange({
+                              startDate: today,
+                              endDate: today,
+                            });
+                          }}
+                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Today
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col space-y-2">
+                      <label className="font-medium text-primary">
+                        Select Date Range:
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm text-gray-600">From:</label>
+                          <input
+                            type="date"
+                            className="w-full p-2 rounded-lg bg-white border border-primary mt-1"
+                            value={dateRange.startDate}
+                            onChange={(e) =>
+                              setDateRange((prev) => ({
+                                ...prev,
+                                startDate: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-gray-600">To:</label>
+                          <input
+                            type="date"
+                            className="w-full p-2 rounded-lg bg-white border border-primary mt-1"
+                            value={dateRange.endDate}
+                            onChange={(e) =>
+                              setDateRange((prev) => ({
+                                ...prev,
+                                endDate: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={resetDateToToday}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 self-start mt-2"
+                      >
+                        Today
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter status summary */}
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
+                <p className="font-medium">Active Filters:</p>
+                <ul className="list-disc pl-5 mt-1 space-y-1">
+                  {statusFilter !== "ALL" && (
+                    <li>
+                      Status:{" "}
+                      <span className="font-semibold">{statusFilter}</span>
+                    </li>
+                  )}
+                  <li>
+                    Date:{" "}
+                    <span className="font-semibold">
+                      {dateFilterMode === "single"
+                        ? new Date(selectedDate).toLocaleDateString()
+                        : `${new Date(
+                            dateRange.startDate
+                          ).toLocaleDateString()} to ${new Date(
+                            dateRange.endDate
+                          ).toLocaleDateString()}`}
+                    </span>
+                  </li>
+                  {searchTerm && (
+                    <li>
+                      Search:{" "}
+                      <span className="font-semibold">"{searchTerm}"</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Orders Table */}
@@ -212,10 +428,8 @@ function OrderLogPage() {
           {/* Table Body */}
           <div className="divide-y divide-gray-200">
             {loading ? (
-              // Loading state
               <div className="p-4 text-center">Loading orders...</div>
             ) : filteredOrders.length > 0 ? (
-              // Orders list
               filteredOrders.map((order) => (
                 <div
                   key={order.order_id}
@@ -244,9 +458,8 @@ function OrderLogPage() {
                 </div>
               ))
             ) : (
-              // No results state
               <div className="p-4 text-center text-gray-500">
-                No orders found matching your criteria.
+                No orders found.
               </div>
             )}
           </div>
@@ -383,32 +596,31 @@ function OrderLogPage() {
                 </div>
 
                 {selectedOrder.status === "PENDING" && (
-                                    <div className="flex justify-between gap-2">
-                  <button
-                    onClick={handleCompleteOrder}
-                    disabled={isProcessing}
-                    className={`w-full p-3 rounded-lg text-white font-semibold ${
-                      isProcessing
-                        ? "bg-gray-400"
-                        : "bg-green-600 hover:bg-green-700"
-                    }`}
-                  >
-                    {isProcessing ? "Processing..." : "Complete Payment"}
-                  </button>
+                  <div className="flex justify-between gap-2">
+                    <button
+                      onClick={handleCompleteOrder}
+                      disabled={isProcessing}
+                      className={`w-full p-3 rounded-lg text-white font-semibold ${
+                        isProcessing
+                          ? "bg-gray-400"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {isProcessing ? "Processing..." : "Complete Payment"}
+                    </button>
 
-                  <button
-                    onClick={handleCancelOrder}
-                    disabled={isProcessing}
-                    className={`w-full p-3 rounded-lg text-white font-semibold ${
-                      isProcessing
-                        ? "bg-gray-400"
-                        : "bg-red-600 hover:bg-red-700"
-                    }`}
-                  >
-                    {isProcessing ? "Processing..." : "Cancel Order"}
-                  </button>
-
-                                    </div>
+                    <button
+                      onClick={handleCancelOrder}
+                      disabled={isProcessing}
+                      className={`w-full p-3 rounded-lg text-white font-semibold ${
+                        isProcessing
+                          ? "bg-gray-400"
+                          : "bg-red-600 hover:bg-red-700"
+                      }`}
+                    >
+                      {isProcessing ? "Processing..." : "Cancel Order"}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

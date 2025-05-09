@@ -114,6 +114,39 @@ function OrderLogPage() {
     setIsProcessing(false);
   };
 
+
+  // Update order status to complete
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+
+    setIsProcessing(true);
+    const result = await updateOrderStatus(selectedOrder.order_id, "CANCELLED");
+
+    if (result.success) {
+      toast.error("Order marked as cancelled");
+      // Update the local state
+      setOrders(
+        orders.map((order) =>
+          order.order_id === selectedOrder.order_id
+            ? {
+                ...order,
+                status: "CANCELLED",
+                updated_at: new Date().toISOString(),
+              }
+            : order
+        )
+      );
+      setSelectedOrder((prev) =>
+        prev ? { ...prev, status: "CANCELLED" } : null
+      );
+    } else {
+      toast.error("Failed to update order status");
+      console.error("Error updating order status:", result.error);
+    }
+
+    setIsProcessing(false);
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -350,6 +383,7 @@ function OrderLogPage() {
                 </div>
 
                 {selectedOrder.status === "PENDING" && (
+                                    <div className="flex justify-between gap-2">
                   <button
                     onClick={handleCompleteOrder}
                     disabled={isProcessing}
@@ -361,6 +395,20 @@ function OrderLogPage() {
                   >
                     {isProcessing ? "Processing..." : "Complete Payment"}
                   </button>
+
+                  <button
+                    onClick={handleCancelOrder}
+                    disabled={isProcessing}
+                    className={`w-full p-3 rounded-lg text-white font-semibold ${
+                      isProcessing
+                        ? "bg-gray-400"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}
+                  >
+                    {isProcessing ? "Processing..." : "Cancel Order"}
+                  </button>
+
+                                    </div>
                 )}
               </div>
             </div>

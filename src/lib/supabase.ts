@@ -174,7 +174,8 @@ export async function createOrder(
   total_amount: number,
   payment_method: string,
   products: Record<string, OrderProduct>,
-  services: SelectedServices
+  services: SelectedServices,
+    customer_name: string,
 ): Promise<ApiResponse<string>> {
   try {
     // 1. Insert the order
@@ -186,6 +187,7 @@ export async function createOrder(
           payment_method,
           products,
           services,
+            customer_name,
         },
       ])
       .select("order_id");
@@ -213,7 +215,6 @@ export async function createOrder(
 
     if (failedUpdates.length > 0) {
       console.warn("Some inventory updates failed:", failedUpdates);
-      // You might want to log these failures to address them later
     }
 
     return { success: true };
@@ -223,9 +224,7 @@ export async function createOrder(
   }
 }
 
-// Add these functions to your existing supabase.ts file
 
-// Get all orders from TBL_ORDERS
 export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
   try {
     const { data, error } = (await supabase
@@ -362,8 +361,6 @@ export async function updateWorkerRoles(
   role_ids: string[]
 ): Promise<ApiResponse<any>> {
   try {
-    // Start a transaction by using RPC (this requires a custom function on your Supabase instance)
-    // Alternatively, do this in sequence
 
     // 1. Delete existing roles
     const { error: deleteError } = await supabase

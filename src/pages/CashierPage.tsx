@@ -23,7 +23,9 @@ function CashierPage() {
   const [products, setProducts] = useState<ProductItemEntries[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessing, setIsProcessing] = useState(false);
+ const [customerName, setCustomerName] = useState("");
 
+    
   useEffect(() => {
     const fetchProducts = async () => {
       const result = await getAllProducts();
@@ -108,7 +110,6 @@ function CashierPage() {
       return;
     }
 
-    // Ensure payment method is selected
     if (!paymentMethod) {
       toast.error("Please select a payment method");
       return;
@@ -121,11 +122,12 @@ function CashierPage() {
         orderTotal,
         paymentMethod,
         orderProducts,
-        selectedServices
+        selectedServices,
+        customerName,
       );
 
       if (result.success) {
-        toast.success("Payment completed successfully!");
+        toast.success("Order completed successfully!");
 
         // Reset order state
         setSelectedServices({});
@@ -307,6 +309,15 @@ function CashierPage() {
                 <img src={IMAGE.GcashLogo} alt="GCash" />
               </label>
             </div>
+                        <div className="w-full py-2 pb-4 ">
+              <label
+                className="font-bold"
+              >
+                                Customer Name
+                            </label>
+
+<input onChange={(e) => setCustomerName(e.target.value)}  type="text" placeholder="Customer Name" className="p-2 w-full rounded-lg" />
+                        </div>
             <button
               className={`p-3 text-xl rounded-lg w-full ${
                 isProcessing
@@ -316,7 +327,7 @@ function CashierPage() {
               onClick={handleCompletePayment}
               disabled={isProcessing || orderTotal <= 0}
             >
-              {isProcessing ? "Processing..." : "Complete Payment"}
+              {isProcessing ? "Processing..." : "Complete Order"}
             </button>
           </div>
         </div>

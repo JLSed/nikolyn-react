@@ -23,9 +23,8 @@ function CashierPage() {
   const [products, setProducts] = useState<ProductItemEntries[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessing, setIsProcessing] = useState(false);
- const [customerName, setCustomerName] = useState("");
+  const [customerName, setCustomerName] = useState("");
 
-    
   useEffect(() => {
     const fetchProducts = async () => {
       const result = await getAllProducts();
@@ -97,8 +96,6 @@ function CashierPage() {
         return updated;
       });
     }
-
-    toast.success(`Returned ${product.item_name} to inventory`);
   };
 
   const handleCompletePayment = async () => {
@@ -123,7 +120,7 @@ function CashierPage() {
         paymentMethod,
         orderProducts,
         selectedServices,
-        customerName,
+        customerName
       );
 
       if (result.success) {
@@ -309,15 +306,16 @@ function CashierPage() {
                 <img src={IMAGE.GcashLogo} alt="GCash" />
               </label>
             </div>
-                        <div className="w-full py-2 pb-4 ">
-              <label
-                className="font-bold"
-              >
-                                Customer Name
-                            </label>
+            <div className="w-full py-2 pb-4 ">
+              <label className="font-bold">Customer Name</label>
 
-<input onChange={(e) => setCustomerName(e.target.value)}  type="text" placeholder="Customer Name" className="p-2 w-full rounded-lg" />
-                        </div>
+              <input
+                onChange={(e) => setCustomerName(e.target.value)}
+                type="text"
+                placeholder="Customer Name"
+                className="p-2 w-full rounded-lg"
+              />
+            </div>
             <button
               className={`p-3 text-xl rounded-lg w-full ${
                 isProcessing

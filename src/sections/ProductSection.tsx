@@ -23,12 +23,7 @@ interface Props {
   >;
 }
 
-function ProductSection({
-  products,
-  setProducts,
-  orderProducts,
-  setOrderProducts,
-}: Props) {
+function ProductSection({ products, setProducts, setOrderProducts }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const groupedProducts = products.reduce((acc, product) => {

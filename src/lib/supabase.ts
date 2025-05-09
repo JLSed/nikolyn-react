@@ -182,7 +182,7 @@ export async function createOrder(
 ): Promise<ApiResponse<string>> {
   try {
     // 1. Insert the order
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("TBL_ORDERS")
       .insert([
         {

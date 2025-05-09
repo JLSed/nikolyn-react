@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  MdLocalLaundryService,
-  MdVisibility,
-  MdVisibilityOff,
-} from "react-icons/md";
+import { MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { login } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import { IMAGE } from "../constants/images";

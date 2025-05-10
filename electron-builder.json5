@@ -3,7 +3,7 @@
   $schema: "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   appId: "com.sed.nikolyn",
   asar: true,
-  productName: "Nikolyn Management",
+  productName: "Nikolyn POS and Inventory System",
   directories: {
     output: "release/${version}",
   },

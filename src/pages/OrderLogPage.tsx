@@ -6,8 +6,6 @@ import { FaArrowLeft, FaFileExport, FaFilter } from "react-icons/fa6";
 import { getAllOrders, updateOrderStatus } from "../lib/supabase";
 import { MdSearch } from "react-icons/md";
 
-// Define the Order type based on TBL_ORDERS structure
-// Define interfaces for the nested service and product data structures
 interface LaundryData {
   value: number;
   laundry_total: number;
@@ -247,14 +245,14 @@ function OrderLogPage() {
 
             <button
               onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
             >
               <FaFilter /> {isFilterMenuOpen ? "Hide Filters" : "Show Filters"}
             </button>
 
             <button
               onClick={exportToCSV}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
             >
               <FaFileExport /> Export to CSV
             </button>
@@ -328,7 +326,7 @@ function OrderLogPage() {
                               endDate: today,
                             });
                           }}
-                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700"
+                          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-700"
                         >
                           Today
                         </button>
@@ -371,7 +369,7 @@ function OrderLogPage() {
                       </div>
                       <button
                         onClick={resetDateToToday}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 self-start mt-2"
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-red-700 self-start mt-2"
                       >
                         Today
                       </button>
@@ -418,7 +416,7 @@ function OrderLogPage() {
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {/* Table Header */}
           <div className="grid grid-cols-5 bg-primary text-secondary p-3 font-bold">
-            <div>Order ID</div>
+            <div>Receipt ID</div>
             <div>Customer</div>
             <div>Date</div>
             <div>Amount</div>

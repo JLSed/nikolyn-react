@@ -108,7 +108,7 @@ function InventoryPage() {
       </div>
 
       <div className="bg-primary text-secondary mx-4 p-4 rounded-lg mt-2 overflow-auto flex-1 text-center ">
-        <div className="grid grid-cols-4 font-bold py-2 text-accent text-xl">
+        <div className="grid grid-cols-4 font-bold py-2 text-accent3 text-xl">
           <div>Product Name</div>
           <div>Category</div>
           <div>Total Quantity</div>
@@ -177,7 +177,7 @@ function InventoryPage() {
                   {entries.map((entry) => (
                     <div
                       key={entry.entry_id}
-                      className="grid grid-cols-4 py-1 text-sm hover:bg-blue-300 rounded"
+                      className="grid grid-cols-4 py-1 text-sm hover:bg-red-300 rounded"
                     >
                       <div>#{entry.entry_id.substring(0, 8)}</div>
                       <div>

@@ -12,6 +12,8 @@ import {
   updateWorkerRoles,
 } from "../lib/supabase";
 import { Worker, WorkerRole, WorkerWithRoles } from "../types/worker";
+import { GrMoney, GrPowerReset } from "react-icons/gr";
+import CreateAccountModal from "../components/CreateAccountModal";
 
 function SystemManagementPage() {
   const navigate = useNavigate();
@@ -26,47 +28,57 @@ function SystemManagementPage() {
   const [availableRoles, setAvailableRoles] = useState<WorkerRole[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("ACTIVE");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch workers and roles data
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch workers
-        const workersResult = await getAllWorkers();
-        if (workersResult.success) {
-          console.log(workersResult);
-          setWorkers(workersResult.data || []);
-        } else {
-          toast.error("Failed to load workers");
-        }
-
-        // Fetch available roles
-        const rolesResult = await getAllRoles();
-        if (rolesResult.success) {
-          setAvailableRoles(rolesResult.data || []);
-        } else {
-          toast.error("Failed to load roles");
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to fetch data");
-      } finally {
-        setLoading(false);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch workers
+      const workersResult = await getAllWorkers();
+      if (workersResult.success) {
+        console.log(workersResult);
+        setWorkers(workersResult.data || []);
+      } else {
+        toast.error("Failed to load workers");
       }
-    };
 
+      // Fetch available roles
+      const rolesResult = await getAllRoles();
+      if (rolesResult.success) {
+        setAvailableRoles(rolesResult.data || []);
+      } else {
+        toast.error("Failed to load roles");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
+  const handleCreateSuccess = () => {
+    // Refresh worker list
+    fetchData();
+  };
+
   // Filter workers based on search term
+
   const filteredWorkers = workers.filter((data) => {
     const fullName = `${data.worker.first_name} ${
       data.worker.middle_name || ""
     } ${data.worker.last_name}`.toLowerCase();
+
     return (
-      fullName.includes(searchTerm.toLowerCase()) ||
-      data.worker.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (fullName.includes(searchTerm.toLowerCase()) ||
+        data.worker.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "ALL" || data.worker.status === statusFilter)
     );
   });
 
@@ -166,18 +178,18 @@ function SystemManagementPage() {
         <p className="font-michroma font-black text-3xl">SYSTEM MANAGEMENT</p>
         <div className="flex gap-2 pr-2">
           <button
-            onClick={() => navigate("/create-account")}
+            onClick={() => setIsCreateModalOpen(true)}
             className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
           >
             <IoPersonAdd />
-            Create New Account
+            Create Account
           </button>
           <button
-            onClick={() => navigate("/delete-account")}
+            onClick={() => navigate("/create-account")}
             className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
           >
-            <IoPersonRemoveSharp />
-            Delete Account
+            <GrMoney />
+            Change Pricing
           </button>
           <button
             onClick={() => navigate("/order-log")}
@@ -190,28 +202,43 @@ function SystemManagementPage() {
       </div>
 
       <div className="px-4 py-2">
-        {/* Search Bar */}
-        <div className="relative flex-1 max-w-md mb-4">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            className="pl-10 p-2 w-full rounded-lg bg-white border border-primary"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Search and Filter Controls */}
+        <div className="flex flex-wrap gap-4 mb-4">
+          {/* Search Bar */}
+          <div className="relative flex-1 max-w-md">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              className="pl-10 p-2 w-full rounded-lg bg-white border border-primary"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center">
+            <label className="mr-2 font-medium">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="p-2 rounded-lg bg-white border border-primary"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="DEACTIVATED">Deactivated</option>
+            </select>
+          </div>
         </div>
 
         {/* Workers Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden text-center">
           {/* Table Header */}
-          <div className="grid grid-cols-6 bg-primary text-secondary p-3 font-bold">
+          <div className="grid grid-cols-4 bg-primary text-secondary p-3 font-bold">
             <div>Employee</div>
-            <div>Email</div>
             <div>Roles</div>
-            <div>Employee ID</div>
-            <div>Auth ID</div>
-            <div>Created</div>
+            <div>Contact Number</div>
+            <div>Address</div>
           </div>
 
           {/* Table Body */}
@@ -225,32 +252,99 @@ function SystemManagementPage() {
                 <div
                   key={data.worker.employee_id}
                   onClick={() => handleWorkerClick(data)}
-                  className="grid grid-cols-6 p-3 hover:bg-gray-100 cursor-pointer transition-colors"
+                  className={`grid grid-cols-4 p-3 hover:brightness-95 cursor-pointer transition-colors ${
+                    data.worker.status === "PENDING"
+                      ? "bg-accent3/30"
+                      : data.worker.status === "DEACTIVATED"
+                      ? "bg-red-100 text-primary"
+                      : "hover:bg-gray-100"
+                  }`}
                 >
-                  <div className="font-medium">
-                    {data.worker.first_name} {data.worker.middle_name || ""}{" "}
-                    {data.worker.last_name}
+                  <div className="flex flex-col text-left">
+                    <div className="font-medium">
+                      {data.worker.first_name} {data.worker.middle_name || ""}{" "}
+                      {data.worker.last_name}
+                    </div>
+                    <div
+                      className={`text-sm ${
+                        data.worker.status === "DEACTIVATED"
+                          ? "text-black"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {data.worker.email}
+                    </div>
+                    {data.worker.status !== "ACTIVE" && (
+                      <span
+                        className={`text-xs font-semibold mt-1 px-2${
+                          data.worker.status === "PENDING"
+                            ? "bg-orange-200 text-orange-800"
+                            : "bg-red-200 text-red-800"
+                        }`}
+                      >
+                        {data.worker.status}
+                      </span>
+                    )}
                   </div>
-                  <div>{data.worker.email}</div>
                   <div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 justify-center">
                       {data.worker_roles.map((role) => (
                         <span
                           key={role.role_id}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold"
+                          className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            data.worker.status === "DEACTIVATED"
+                              ? "bg-red-800/50 text-white"
+                              : "bg-red-100 text-red-700"
+                          }`}
                         >
                           {role.role_name}
                         </span>
                       ))}
+                      {data.worker_roles.length === 0 && (
+                        <span
+                          className={`text-sm italic ${
+                            data.worker.status === "DEACTIVATED"
+                              ? "text-secondary/70"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          No roles assigned
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="font-mono text-sm">
-                    {data.worker.employee_id.substring(0, 8)}...
+                  <div>
+                    {data.worker.contact_number ? (
+                      data.worker.contact_number
+                    ) : (
+                      <span
+                        className={`text-sm italic ${
+                          data.worker.status === "DEACTIVATED"
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        No contact number
+                      </span>
+                    )}
                   </div>
-                  <div className="font-mono text-sm">
-                    {data.worker.auth_id.substring(0, 8)}...
+                  <div className="px-2 truncate">
+                    {data.worker.address ? (
+                      <span title={data.worker.address}>
+                        {data.worker.address}
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-sm italic ${
+                          data.worker.status === "DEACTIVATED"
+                            ? "text-black"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        No address provided
+                      </span>
+                    )}
                   </div>
-                  <div>{formatDate(data.worker.created_at)}</div>
                 </div>
               ))
             ) : (
@@ -358,6 +452,25 @@ function SystemManagementPage() {
                   ))}
                 </div>
               </div>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold mb-2">Actions</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate("/delete-account")}
+                    className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                  >
+                    <IoPersonRemoveSharp />
+                    Deactive Account
+                  </button>
+                  <button
+                    onClick={() => navigate("/delete-account")}
+                    className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                  >
+                    <GrPowerReset />
+                    Send Password Reset
+                  </button>
+                </div>
+              </div>
 
               <div className="flex justify-end space-x-2">
                 <button
@@ -372,7 +485,7 @@ function SystemManagementPage() {
                   className={`px-4 py-2 bg-primary text-white rounded-md ${
                     isProcessing
                       ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-blue-700"
+                      : "hover:bg-red-700"
                   }`}
                 >
                   {isProcessing ? "Saving..." : "Save Changes"}
@@ -382,6 +495,12 @@ function SystemManagementPage() {
           </div>
         </div>
       )}
+      <CreateAccountModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        availableRoles={availableRoles}
+        onSuccess={handleCreateSuccess}
+      />
     </main>
   );
 }

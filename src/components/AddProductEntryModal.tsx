@@ -181,7 +181,7 @@ function AddProductEntryModal({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 bg-primary hover:bg-blue-700 text-secondary rounded disabled:bg-blue-300"
+                className="px-4 py-2 bg-primary hover:bg-red-700 text-secondary rounded disabled:bg-red-300"
               >
                 {isLoading ? "Adding..." : "Add Entry"}
               </button>

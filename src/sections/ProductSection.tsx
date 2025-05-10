@@ -99,7 +99,7 @@ function ProductSection({ products, setProducts, setOrderProducts }: Props) {
 
   return (
     <div className="bg-primary text-secondary rounded-tr-lg p-4 min-h-96">
-      <p className="text-2xl font-bold text-accent">Products</p>
+      <p className="text-2xl font-bold text-accent3">Products</p>
       <div className="relative flex text-primary mt-2">
         <FaSearch className="absolute left-2 text-primary h-full" />
         <input

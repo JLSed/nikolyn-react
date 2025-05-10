@@ -181,73 +181,71 @@ function CashierPage() {
           <div className="mb-4">
             <p className="font-bold text-3xl">Order</p>
             <div className="p-4 rounded-lg flex flex-col gap-2">
-              {/* Services Section */}
               {Object.entries(selectedServices).map(([serviceName]) => {
                 const isFullService = serviceName === "Full Service";
                 return (
-                  <div
-                    key={serviceName}
-                    className="relative p-2 border-2 rounded-md border-gray-300"
-                  >
-                    {/* Remove Button */}
+                  <div key={serviceName} className="flex relative group">
                     <button
-                      className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      className="absolute -left-6 z-10 top-0 bottom-0 bg-primary text-white flex items-center justify-center rounded-tl-lg rounded-bl-lg px-2 opacity-0 group-hover:opacity-100 transform translate-x-full group-hover:translate-x-0 transition-all duration-200"
                       onClick={() => removeService(serviceName)}
                     >
                       X
                     </button>
-                    <div className="flex justify-between items-center text-lg font-bold">
-                      <p>{serviceName}</p>
-                      <p>
-                        TOTAL{" "}
-                        {selectedServices[serviceName].sub_total.toFixed(2)}
-                      </p>
-                    </div>
-                    <ul key={serviceName}>
-                      {isFullService ? (
-                        <li className="flex justify-between">
-                          - Fixed Price{" "}
-                          <span>{selectedServices[serviceName].sub_total}</span>
-                        </li>
-                      ) : (
-                        Object.entries(
-                          selectedServices[serviceName].laundryWeights
-                        ).map(([laundryName, data]) => (
-                          <li key={laundryName}>
+                    <div className="relative p-2 border-2 rounded-md border-gray-300 select-none w-full">
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <p>{serviceName}</p>
+                        <p>
+                          TOTAL{" "}
+                          {selectedServices[serviceName].sub_total.toFixed(2)}
+                        </p>
+                      </div>
+                      <ul key={serviceName}>
+                        {isFullService ? (
+                          <li className="flex justify-between">
+                            - Fixed Price{" "}
                             <span>
-                              {laundryName} - {data.laundry_total}
+                              {selectedServices[serviceName].sub_total}
                             </span>
                           </li>
-                        ))
-                      )}
-                    </ul>
+                        ) : (
+                          Object.entries(
+                            selectedServices[serviceName].laundryWeights
+                          ).map(([laundryName, data]) => (
+                            <li key={laundryName}>
+                              <span>
+                                {laundryName} - {data.laundry_total}
+                              </span>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
                   </div>
                 );
               })}
 
               {Object.values(orderProducts).map((product) => (
-                <div
-                  key={product.item_id}
-                  className="relative p-2 border-2 rounded-md border-gray-300"
-                >
+                <div key={product.item_id} className="flex relative group">
                   <button
-                    className="absolute top-0 left-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                    className="absolute -left-6 z-10 top-0 bottom-0 bg-primary text-white flex items-center justify-center rounded-tl-lg rounded-bl-lg px-2 opacity-0 group-hover:opacity-100 transform translate-x-full group-hover:translate-x-0 transition-all duration-200"
                     onClick={() => removeProductFromOrder(product.item_id)}
                   >
                     X
                   </button>
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <p>{product.item_name}</p>
-                    <p>TOTAL {product.price * product.quantity}</p>
+                  <div className="relative p-2 border-2 rounded-md border-gray-300 select-none w-full">
+                    <div className="flex justify-between items-center text-lg font-bold">
+                      <p>{product.item_name}</p>
+                      <p>TOTAL {product.price * product.quantity}</p>
+                    </div>
+                    <ul>
+                      <li className="flex justify-between">
+                        - {product.quantity} x ₱ {product.price.toFixed(2)}{" "}
+                        <span>
+                          ₱ {(product.price * product.quantity).toFixed(2)}
+                        </span>
+                      </li>
+                    </ul>
                   </div>
-                  <ul>
-                    <li className="flex justify-between">
-                      - {product.quantity} x ₱ {product.price.toFixed(2)}{" "}
-                      <span>
-                        ₱ {(product.price * product.quantity).toFixed(2)}
-                      </span>
-                    </li>
-                  </ul>
                 </div>
               ))}
 
@@ -267,7 +265,7 @@ function CashierPage() {
                 <p className="text-2xl">PHP {orderTotal.toFixed(2)}</p>
               </div>
             </div>
-            <p className="font-bold text-3xl">Payment Method</p>
+            <p className="font-bold text-xl">Payment Method</p>
             <div className="flex justify-between gap-4">
               <label
                 className={`my-2 p-4 rounded-lg flex-1 flex items-center justify-center gap-2 text-2xl cursor-pointer ${
@@ -307,12 +305,12 @@ function CashierPage() {
               </label>
             </div>
             <div className="w-full py-2 pb-4 ">
-              <label className="font-bold">Customer Name</label>
+              <label className="font-bold text-xl">Customer Name</label>
 
               <input
                 onChange={(e) => setCustomerName(e.target.value)}
                 type="text"
-                placeholder="Customer Name"
+                placeholder="e.g Juan Cruz"
                 className="p-2 w-full rounded-lg"
               />
             </div>

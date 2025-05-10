@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { ApiResponse } from "../types/api";
-import { Worker, WorkerRole, WorkerWithRoles } from "../types/worker";
+import {
+  Worker,
+  WorkerRole,
+  WorkerWithRoles,
+  CreateWorkerRequest,
+} from "../types/worker";
 import { LaundryType, SelectedServices, Service } from "../types/laundry";
 import {
   ProductEntry,
@@ -32,7 +37,7 @@ export async function getCurrentWorker(): Promise<
 
   const { data: workerData, error } = (await supabase
     .from("TBL_WORKER")
-    .select("employee_id, first_name, middle_name, last_name")
+    .select("*")
     .eq("auth_id", userId)
     .single()) as { data: Worker | null; error: any };
 
@@ -181,7 +186,6 @@ export async function createOrder(
   customer_name: string
 ): Promise<ApiResponse<string>> {
   try {
-    // 1. Insert the order
     const { error } = await supabase
       .from("TBL_ORDERS")
       .insert([
@@ -249,7 +253,6 @@ export async function getAllOrders(): Promise<ApiResponse<Order[]>> {
   }
 }
 
-// Update the status of an order
 export async function updateOrderStatus(
   orderId: string,
   status: string
@@ -391,6 +394,70 @@ export async function updateWorkerRoles(
     return { success: true };
   } catch (error) {
     console.error("Error updating worker roles:", error);
+    return { success: false, error };
+  }
+}
+
+export async function createWorker(
+  request: CreateWorkerRequest
+): Promise<ApiResponse<Worker>> {
+  try {
+    // 1. Create the auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: request.email,
+      password: request.password,
+    });
+
+    if (authError) {
+      console.error("Error creating auth user:", authError);
+      return { success: false, error: authError };
+    }
+
+    // 2. Create the worker record
+    const { data: workerData, error: workerError } = (await supabase
+      .from("TBL_WORKER")
+      .insert([
+        {
+          first_name: request.first_name,
+          middle_name: request.middle_name,
+          last_name: request.last_name,
+          email: request.email,
+          contact_number: request.contact_number,
+          address: request.address,
+          auth_id: authData?.user?.id,
+          status: "PENDING",
+        },
+      ])
+      .select()
+      .single()) as {
+      data: Worker | null;
+      error: any;
+    };
+
+    if (workerError) {
+      console.error("Error creating worker:", workerError);
+      return { success: false, error: workerError };
+    }
+
+    // 3. Assign roles if any are selected
+    if (request.role_ids.length > 0) {
+      const rolesToInsert = request.role_ids.map((role_id) => ({
+        employee_id: workerData?.employee_id,
+        role_id,
+      }));
+
+      const { error: rolesError } = await supabase
+        .from("TBL_WORKER_ROLE")
+        .insert(rolesToInsert);
+
+      if (rolesError) {
+        console.error("Error assigning roles:", rolesError);
+      }
+    }
+
+    return { success: true, data: workerData as Worker };
+  } catch (error) {
+    console.error("Exception creating worker:", error);
     return { success: false, error };
   }
 }

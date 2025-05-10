@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import InventoryPage from "./pages/InventoryPage";
 import SystemManagementPage from "./pages/SystemManagementPage";
 import OrderLogPage from "./pages/OrderLogPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/system" element={<SystemManagementPage />} />
         <Route path="/order-log" element={<OrderLogPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Routes>
     </Router>
   );

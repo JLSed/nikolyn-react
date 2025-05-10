@@ -179,16 +179,16 @@ function LaundryWeightSection({
   }
 
   return (
-    <div className="bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
-      <p className="text-2xl font-bold text-accent">Laundry Weight</p>
-      <div className="flex gap-4">
+    <div className="flex flex-col bg-primary text-secondary p-4 rounded-lg rounded-tl-none rounded-bl-none">
+      <p className="text-2xl font-bold text-accent3">Laundry Weight</p>
+      <div className="grid grid-cols-3 gap-4 w-full py-3">
         {laundryType.map((type) => (
-          <div key={type.type_id}>
-            <p>{type.cloth_name}</p>
-            <div className="flex gap-2 items-center">
+          <div key={type.type_id} className="flex flex-col rounded-md">
+            <p className="font-medium mb-1">{type.cloth_name}</p>
+            <div className="flex gap-2 items-center mb-1">
               <input
                 type="number"
-                className="category-input p-2 rounded-md text-primary font-bold bg-secondary"
+                className="category-input p-2 w-full rounded-md text-primary font-bold bg-secondary"
                 value={laundryWeights[type.cloth_name]?.value || ""}
                 onChange={(e) =>
                   handleLaundryWeightChange(
@@ -199,13 +199,13 @@ function LaundryWeightSection({
                 }
               />
             </div>
-            <p>
-              {type.limit} {type.weight_unit} Max Limit
+            <p className="text-sm text-secondary/80">
+              {type.limit} {type.weight_unit} Max Load
             </p>
           </div>
         ))}
       </div>
-      <p className="text-2xl font-bold text-accent mt-4">Services</p>
+      <p className="text-2xl font-bold text-accent3 mt-4">Services</p>
       <div className="flex">
         <form className="flex gap-4">
           {services.map((service) => (

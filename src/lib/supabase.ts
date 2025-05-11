@@ -461,3 +461,131 @@ export async function createWorker(
     return { success: false, error };
   }
 }
+
+// Laundry Type APIs
+export async function deleteLaundryType(
+  typeId: string
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_LAUNDRY_TYPE")
+      .delete()
+      .eq("type_id", typeId);
+
+    if (error) {
+      console.error("Error deleting laundry type:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception deleting laundry type:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateLaundryType(
+  typeId: string,
+  updates: Partial<LaundryType>
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_LAUNDRY_TYPE")
+      .update(updates)
+      .eq("type_id", typeId);
+
+    if (error) {
+      console.error("Error updating laundry type:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception updating laundry type:", error);
+    return { success: false, error };
+  }
+}
+
+export async function addLaundryType(
+  laundryType: Omit<LaundryType, "type_id">
+): Promise<ApiResponse<LaundryType>> {
+  const { data, error } = (await supabase
+    .from("TBL_LAUNDRY_TYPE")
+    .insert([laundryType])
+    .select()) as {
+    data: LaundryType[] | null;
+    error: any;
+  };
+
+  if (error) {
+    console.error("Error adding laundry type:", error);
+    return { success: false, error };
+  }
+
+  if (error || !data) return { success: false, error: error };
+  return { success: true, data: data[0] };
+}
+
+// Service APIs
+export async function deleteService(
+  serviceId: string
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_SERVICE")
+      .delete()
+      .eq("service_id", serviceId);
+
+    if (error) {
+      console.error("Error deleting service:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception deleting service:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateService(
+  serviceId: string,
+  updates: Partial<Service>
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_SERVICE")
+      .update(updates)
+      .eq("service_id", serviceId);
+
+    if (error) {
+      console.error("Error updating service:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception updating service:", error);
+    return { success: false, error };
+  }
+}
+
+export async function addService(
+  service: Omit<Service, "service_id">
+): Promise<ApiResponse<Service>> {
+  const { data, error } = (await supabase
+    .from("TBL_SERVICE")
+    .insert([service])
+    .select()) as {
+    data: Service[] | null;
+    error: any;
+  };
+
+  if (error) {
+    console.error("Error adding service:", error);
+    return { success: false, error };
+  }
+
+  if (error || !data) return { success: false, error: error };
+  return { success: true, data: data[0] };
+}

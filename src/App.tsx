@@ -6,18 +6,22 @@ import InventoryPage from "./pages/InventoryPage";
 import SystemManagementPage from "./pages/SystemManagementPage";
 import OrderLogPage from "./pages/OrderLogPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import PricingManagementPage from "./pages/PricingManagementPage";
+import LandingPage from "./pages/LandingPage";
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/pos" element={<CashierPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/system" element={<SystemManagementPage />} />
         <Route path="/order-log" element={<OrderLogPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/pricing-management" element={<PricingManagementPage />} />
       </Routes>
     </Router>
   );

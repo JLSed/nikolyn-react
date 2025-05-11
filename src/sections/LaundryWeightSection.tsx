@@ -210,7 +210,7 @@ function LaundryWeightSection({
         <form className="flex gap-4">
           {services.map((service) => (
             <div key={service.service_id}>
-              <p>₱ {service.price_per_limit} per Max Limit</p>
+              <p>₱ {service.price_per_limit} per Max Load</p>
               <div className="px-2 flex border-2 border-secondary rounded-md text-secondary p-1 gap-2">
                 <input
                   className="scale-150"

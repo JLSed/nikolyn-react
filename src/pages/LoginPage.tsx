@@ -103,7 +103,7 @@ function LoginPage() {
       // Reset attempts on successful login
       setLoginAttempts(0);
       localStorage.removeItem("loginLock");
-      navigate("/dashboard", { replace: true });
+      navigate("/landing", { replace: true });
     } else {
       // Increment failed attempts
       const newAttempts = loginAttempts + 1;

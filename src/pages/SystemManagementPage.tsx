@@ -89,12 +89,12 @@ function SystemManagementPage() {
       first_name: data.worker.first_name,
       middle_name: data.worker.middle_name,
       last_name: data.worker.last_name,
-      email: data.worker.email,
+      contact_number: data.worker.contact_number,
+      address: data.worker.address,
     });
 
     // Extract role IDs from worker roles
     const roleIds = data.worker_roles.map((role) => role.role_id);
-    console.log(roleIds);
     setSelectedRoles(roleIds);
 
     setIsModalOpen(true);
@@ -185,7 +185,7 @@ function SystemManagementPage() {
             Create Account
           </button>
           <button
-            onClick={() => navigate("/create-account")}
+            onClick={() => navigate("/pricing-management")}
             className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
           >
             <GrMoney />
@@ -417,14 +417,33 @@ function SystemManagementPage() {
                     }
                   />
                 </div>
+
                 <div>
-                  <label className="block text-gray-700 mb-1">Email</label>
+                  <label className="block text-gray-700 mb-1">
+                    Contact Number
+                  </label>
                   <input
-                    type="email"
+                    type="text"
+                    placeholder="e.g. 09XXXXXXXXX"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    value={editWorker.email || ""}
+                    value={editWorker.contact_number || ""}
                     onChange={(e) =>
-                      setEditWorker({ ...editWorker, email: e.target.value })
+                      setEditWorker({
+                        ...editWorker,
+                        contact_number: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-gray-700 mb-1">Address</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                    rows={3}
+                    placeholder="e.g. 123 Main St, Barangay Example, City"
+                    value={editWorker.address || ""}
+                    onChange={(e) =>
+                      setEditWorker({ ...editWorker, address: e.target.value })
                     }
                   />
                 </div>

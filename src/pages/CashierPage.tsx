@@ -5,7 +5,7 @@ import ProductSection, { OrderProduct } from "../sections/ProductSection";
 import { SelectedServices } from "../types/laundry";
 import { toast, Toaster } from "react-hot-toast";
 import { ProductItemEntries } from "../types/inventory";
-import { getAllProducts, createOrder } from "../lib/supabase";
+import { getAllProducts, createOrder, createAuditLog } from "../lib/supabase";
 import { BsCash } from "react-icons/bs";
 import { IMAGE } from "../constants/images";
 import { AiOutlineAudit } from "react-icons/ai";
@@ -113,6 +113,16 @@ function CashierPage() {
     }
 
     setIsProcessing(true);
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const year = today.getFullYear();
+    const dateString = `${month}${day}${year}`;
+
+    const randomNum = Math.floor(Math.random() * 9999999) + 1;
+    const increment = String(randomNum).padStart(3, "0");
+
+    const receiptId = `RID-${dateString}-${increment}`;
 
     try {
       const result = await createOrder(
@@ -120,12 +130,23 @@ function CashierPage() {
         paymentMethod,
         orderProducts,
         selectedServices,
-        customerName
+        customerName,
+        receiptId
       );
 
       if (result.success) {
         toast.success("Order completed successfully!");
 
+        const currentWorker = JSON.parse(
+          localStorage.getItem("currentWorker") || "{}"
+        );
+        await createAuditLog({
+          employee_id: currentWorker.data?.worker?.employee_id || "",
+          email: currentWorker.data?.worker?.email || "",
+          action_type: "CREATE ORDER",
+          details: `Created Order ${receiptId}`,
+          on_page: "Point of Sales",
+        });
         // Reset order state
         setSelectedServices({});
         setOrderProducts({});

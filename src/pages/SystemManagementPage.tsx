@@ -10,13 +10,17 @@ import {
   getAllRoles,
   updateWorker,
   updateWorkerRoles,
+  createAuditLog,
 } from "../lib/supabase";
 import { Worker, WorkerRole, WorkerWithRoles } from "../types/worker";
 import { GrMoney, GrPowerReset } from "react-icons/gr";
 import CreateAccountModal from "../components/CreateAccountModal";
+import { sendPasswordReset, updateWorkerStatus } from "../lib/auth";
+import { useConfirm } from "../components/ConfirmDialog";
 
 function SystemManagementPage() {
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
   const [workers, setWorkers] = useState<WorkerWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,7 +42,6 @@ function SystemManagementPage() {
       // Fetch workers
       const workersResult = await getAllWorkers();
       if (workersResult.success) {
-        console.log(workersResult);
         setWorkers(workersResult.data || []);
       } else {
         toast.error("Failed to load workers");
@@ -156,6 +159,16 @@ function SystemManagementPage() {
       );
 
       toast.success("Worker information updated successfully");
+      const currentWorker = JSON.parse(
+        localStorage.getItem("currentWorker") || "{}"
+      );
+      await createAuditLog({
+        employee_id: currentWorker.data?.worker?.employee_id || "",
+        email: currentWorker.data?.worker?.email || "",
+        action_type: "UPDATE ACCOUNT",
+        details: `Updated Account "${selectedWorker.worker.email}" Information`,
+        on_page: "System Management",
+      });
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error updating worker:", error);
@@ -165,10 +178,158 @@ function SystemManagementPage() {
     }
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const handleReactivateAccount = async () => {
+    if (!selectedWorker) return;
+    confirm({
+      title: "Reactivate Account",
+      message: `Are you sure you want to reactivate ${selectedWorker.worker.email}?`,
+      confirmText: "Reactivate",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          const result = await updateWorkerStatus(
+            selectedWorker.worker.employee_id,
+            "ACTIVE"
+          );
+
+          if (result.success) {
+            // Update local state
+            setWorkers((prev) =>
+              prev.map((worker) =>
+                worker.worker.employee_id === selectedWorker.worker.employee_id
+                  ? {
+                      ...worker,
+                      worker: {
+                        ...worker.worker,
+                        status: "ACTIVE",
+                      },
+                    }
+                  : worker
+              )
+            );
+
+            toast.success("Account successfully reactivated");
+            const currentWorker = JSON.parse(
+              localStorage.getItem("currentWorker") || "{}"
+            );
+            await createAuditLog({
+              employee_id: currentWorker.data.worker.employee_id,
+              email: currentWorker.data.worker.email,
+              action_type: "UPDATE",
+              details: `Account "${selectedWorker.worker.email}" REACTIVATED by ${currentWorker.shortenedName}`,
+              on_page: "System Management",
+            });
+            setIsModalOpen(false);
+          } else {
+            throw new Error(
+              result.error?.message || "Failed to reactivate account"
+            );
+          }
+        } catch (error) {
+          console.error("Error reactivating account:", error);
+          toast.error("Failed to reactivate account");
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
   };
+
+  const handleDeactivateAccount = async () => {
+    if (!selectedWorker) return;
+    confirm({
+      title: "Deactivate Account",
+      message: `Are you sure you want to deactivate ${selectedWorker.worker.email}?`,
+      confirmText: "Deactivate",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          const result = await updateWorkerStatus(
+            selectedWorker.worker.employee_id,
+            "DEACTIVATED"
+          );
+
+          if (result.success) {
+            // Update local state
+            setWorkers((prev) =>
+              prev.map((worker) =>
+                worker.worker.employee_id === selectedWorker.worker.employee_id
+                  ? {
+                      ...worker,
+                      worker: {
+                        ...worker.worker,
+                        status: "DEACTIVATED",
+                      },
+                    }
+                  : worker
+              )
+            );
+
+            toast.success("Account successfully deactivated");
+            setIsModalOpen(false);
+            const currentWorker = JSON.parse(
+              localStorage.getItem("currentWorker") || "{}"
+            );
+            await createAuditLog({
+              employee_id: currentWorker.data.worker.employee_id,
+              email: currentWorker.data.worker.email,
+              action_type: "UPDATE",
+              details: `Account "${selectedWorker.worker.email}" DEACTIVATED by ${currentWorker.shortenedName}`,
+              on_page: "System Management",
+            });
+          } else {
+            throw new Error(
+              result.error?.message || "Failed to deactivate account"
+            );
+          }
+        } catch (error) {
+          console.error("Error deactivating account:", error);
+          toast.error("Failed to deactivate account");
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!selectedWorker) return;
+
+    confirm({
+      title: "Send Password Reset",
+      message: `Are you sure you want to send a password reset email to ${selectedWorker.worker.email}?`,
+      confirmText: "Send",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          const result = await sendPasswordReset(selectedWorker.worker.email);
+
+          if (result.success) {
+            toast.success(
+              `Password reset email sent to ${selectedWorker.worker.email}`
+            );
+          } else {
+            throw new Error(
+              result.error?.message || "Failed to send password reset"
+            );
+          }
+        } catch (error) {
+          console.error("Error sending password reset:", error);
+          toast.error("Failed to send password reset email");
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+    });
+  };
+
+  // Format date for display
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString();
+  // };
 
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-fit min-h-screen">
@@ -192,7 +353,7 @@ function SystemManagementPage() {
             Change Pricing
           </button>
           <button
-            onClick={() => navigate("/order-log")}
+            onClick={() => navigate("/audit-log")}
             className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
           >
             <AiOutlineAudit />
@@ -475,19 +636,46 @@ function SystemManagementPage() {
                 <h3 className="text-xl font-bold mb-2">Actions</h3>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate("/delete-account")}
-                    className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                    onClick={handleDeactivateAccount}
+                    disabled={
+                      isProcessing ||
+                      selectedWorker?.worker.status === "DEACTIVATED"
+                    }
+                    className={`border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg ${
+                      selectedWorker?.worker.status === "DEACTIVATED"
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed border-gray-400"
+                        : "bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                    }`}
                   >
                     <IoPersonRemoveSharp />
-                    Deactive Account
+                    {selectedWorker?.worker.status === "DEACTIVATED"
+                      ? "Account Deactivated"
+                      : "Deactivate Account"}
                   </button>
                   <button
-                    onClick={() => navigate("/delete-account")}
-                    className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                    onClick={handleSendPasswordReset}
+                    disabled={
+                      isProcessing ||
+                      selectedWorker?.worker.status === "DEACTIVATED"
+                    }
+                    className={`border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg ${
+                      selectedWorker?.worker.status === "DEACTIVATED"
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed border-gray-400"
+                        : "bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                    }`}
                   >
                     <GrPowerReset />
                     Send Password Reset
                   </button>
+                  {selectedWorker?.worker.status === "DEACTIVATED" && (
+                    <button
+                      onClick={handleReactivateAccount}
+                      className={`border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors`}
+                    >
+                      <GrPowerReset />
+                      Reactivate Account
+                    </button>
+                  )}
                 </div>
               </div>
 

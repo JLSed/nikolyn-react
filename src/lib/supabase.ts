@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { ApiResponse } from "../types/api";
+import { ApiResponse, AuditLog, AuditLogWithActor } from "../types/api";
 import {
   Worker,
   WorkerRole,
@@ -183,7 +183,8 @@ export async function createOrder(
   payment_method: string,
   products: Record<string, OrderProduct>,
   services: SelectedServices,
-  customer_name: string
+  customer_name: string,
+  receipt_id: string
 ): Promise<ApiResponse<string>> {
   try {
     const { error } = await supabase
@@ -195,6 +196,7 @@ export async function createOrder(
           products,
           services,
           customer_name,
+          receipt_id,
         },
       ])
       .select("order_id");
@@ -588,4 +590,100 @@ export async function addService(
 
   if (error || !data) return { success: false, error: error };
   return { success: true, data: data[0] };
+}
+
+// Add this function to check if an email already exists
+export async function checkEmailExists(
+  email: string
+): Promise<ApiResponse<boolean>> {
+  try {
+    const { data, error, count } = await supabase
+      .from("TBL_WORKER")
+      .select("email", { count: "exact" })
+      .eq("email", email);
+
+    if (error) {
+      console.error("Error checking email:", error);
+      return { success: false, error };
+    }
+
+    return {
+      success: true,
+      data: count ? count > 0 : data && data.length > 0,
+    };
+  } catch (error) {
+    console.error("Exception checking email:", error);
+    return { success: false, error };
+  }
+}
+
+export async function createAuditLog(params: {
+  employee_id: string;
+  email: string;
+  action_type: string;
+  details: string;
+  on_page: string;
+}): Promise<ApiResponse<AuditLog>> {
+  const { error } = (await supabase.from("TBL_AUDIT_LOG").insert(params)) as {
+    data: AuditLog | null;
+    error: any;
+  };
+
+  if (error) {
+    console.error("Error adding product entry:", error);
+    return { success: false, error };
+  }
+  return { success: true };
+}
+
+export async function getAllAuditLogs(): Promise<
+  ApiResponse<AuditLogWithActor[]>
+> {
+  try {
+    const { data, error } = (await supabase
+      .from("TBL_AUDIT_LOG")
+      .select("*")
+      .order("timestamp", { ascending: false })) as {
+      data: AuditLogWithActor[] | null;
+      error: any;
+    };
+
+    if (error) {
+      console.error("Error fetching audit logs:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (error) {
+    console.error("Exception fetching audit logs:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Get worker details by employee_id
+ */
+export async function getWorkerByEmployeeId(
+  employee_id: string
+): Promise<ApiResponse<Worker>> {
+  try {
+    const { data, error } = (await supabase
+      .from("TBL_WORKER")
+      .select("*")
+      .eq("employee_id", employee_id)
+      .single()) as {
+      data: Worker | null;
+      error: any;
+    };
+
+    if (error) {
+      console.error("Error fetching worker:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data: data as Worker };
+  } catch (error) {
+    console.error("Exception fetching worker:", error);
+    return { success: false, error };
+  }
 }

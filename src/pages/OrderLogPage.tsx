@@ -3,7 +3,11 @@ import { Toaster, toast } from "react-hot-toast";
 import NavBar from "../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaFileExport, FaFilter } from "react-icons/fa6";
-import { getAllOrders, updateOrderStatus } from "../lib/supabase";
+import {
+  createAuditLog,
+  getAllOrders,
+  updateOrderStatus,
+} from "../lib/supabase";
 import { MdSearch } from "react-icons/md";
 
 interface LaundryData {
@@ -34,6 +38,7 @@ interface Order {
   customer_name: string;
   created_at: string;
   updated_at: string;
+  receipt_id: string;
 }
 
 function OrderLogPage() {
@@ -76,9 +81,10 @@ function OrderLogPage() {
   // Filter orders based on search term and status filter
   const filteredOrders = orders.filter((order) => {
     const orderDate = new Date(order.created_at).toISOString().split("T")[0];
-    const matchesSearch = order.customer_name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.receipt_id &&
+        order.receipt_id.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus =
       statusFilter === "ALL" || order.status === statusFilter;
     const matchesDate =
@@ -102,6 +108,16 @@ function OrderLogPage() {
 
     if (result.success) {
       toast.success("Order marked as complete");
+      const currentWorker = JSON.parse(
+        localStorage.getItem("currentWorker") || "{}"
+      );
+      await createAuditLog({
+        employee_id: currentWorker.data?.worker?.employee_id || "",
+        email: currentWorker.data?.worker?.email || "",
+        action_type: "UPDATE ORDER",
+        details: `Updated Order ${selectedOrder.receipt_id} to COMPLETED`,
+        on_page: "Point of Sales",
+      });
       // Update the local state
       setOrders(
         orders.map((order) =>
@@ -134,6 +150,16 @@ function OrderLogPage() {
 
     if (result.success) {
       toast.error("Order marked as cancelled");
+      const currentWorker = JSON.parse(
+        localStorage.getItem("currentWorker") || "{}"
+      );
+      await createAuditLog({
+        employee_id: currentWorker.data?.worker?.employee_id || "",
+        email: currentWorker.data?.worker?.email || "",
+        action_type: "UPDATE ORDER",
+        details: `Updated Order ${selectedOrder.receipt_id} to CANCELLED`,
+        on_page: "Point of Sales",
+      });
       // Update the local state
       setOrders(
         orders.map((order) =>
@@ -175,10 +201,10 @@ function OrderLogPage() {
       return;
     }
     try {
-      const headers = ["Order ID", "Customer", "Date", "Amount", "Status"];
+      const headers = ["Receipt ID", "Customer", "Date", "Amount", "Status"];
 
       const csvRows = filteredOrders.map((order) => [
-        order.order_id,
+        order.receipt_id,
         order.customer_name || "Walk-in Customer",
         new Date(order.created_at).toDateString(),
         order.total_amount.toFixed(2),
@@ -236,7 +262,7 @@ function OrderLogPage() {
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by customer name..."
+                placeholder="Search by customer name or receipt ID..."
                 className="pl-10 p-2 w-full rounded-lg bg-white border border-primary"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -434,9 +460,7 @@ function OrderLogPage() {
                   onClick={() => handleOrderClick(order)}
                   className="grid grid-cols-5 p-3 hover:bg-gray-100 cursor-pointer transition-colors"
                 >
-                  <div className="font-medium">
-                    {order.order_id.substring(0, 8)}
-                  </div>
+                  <div className="font-medium">{order.receipt_id}</div>
                   <div>{order.customer_name || "Walk-in Customer"}</div>
                   <div>{formatDate(order.created_at)}</div>
                   <div>₱ {order.total_amount.toFixed(2)}</div>
@@ -481,8 +505,10 @@ function OrderLogPage() {
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <p className="text-gray-500">Order ID</p>
-                  <p className="font-semibold">{selectedOrder.order_id}</p>
+                  <p className="text-gray-500">Receipt ID</p>
+                  <p className="font-semibold">
+                    {selectedOrder.receipt_id || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Status</p>

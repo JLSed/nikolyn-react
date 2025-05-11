@@ -4,6 +4,7 @@ import { login } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import { IMAGE } from "../constants/images";
 import { toast, Toaster } from "react-hot-toast";
+import { createAuditLog } from "../lib/supabase";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -103,6 +104,13 @@ function LoginPage() {
       // Reset attempts on successful login
       setLoginAttempts(0);
       localStorage.removeItem("loginLock");
+      await createAuditLog({
+        employee_id: result.data.employee_id,
+        email: result.data.email,
+        action_type: "LOG IN",
+        details: `Account "${result.data.email}" log in the system`,
+        on_page: "Login Page",
+      });
       navigate("/landing", { replace: true });
     } else {
       // Increment failed attempts
@@ -114,7 +122,7 @@ function LoginPage() {
       } else {
         const attemptsLeft = MAX_ATTEMPTS - newAttempts;
         setError(
-          `${result.message || "Invalid credentials"}. ${attemptsLeft} ${
+          `${result.error || "Invalid credentials"}. ${attemptsLeft} ${
             attemptsLeft === 1 ? "attempt" : "attempts"
           } remaining.`
         );

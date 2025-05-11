@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MdDashboard, MdPointOfSale, MdInventory } from "react-icons/md";
 import { GrSystem } from "react-icons/gr";
-import { AiOutlineAudit } from "react-icons/ai";
-import { GrMoney } from "react-icons/gr";
 import { IMAGE } from "../constants/images";
-import { getCurrentWorker } from "../lib/supabase";
-import { WorkerRole } from "../types/worker";
+import { createAuditLog, getCurrentWorker } from "../lib/supabase";
+import { Worker, WorkerRole } from "../types/worker";
+import PasswordChangeModal from "../components/PasswordChangeModal";
+import { toast, Toaster } from "react-hot-toast";
+import { signOut } from "../lib/auth";
 
-// Use the same icon mapping as NavBar
 const iconMap = {
   GrSystem: <GrSystem size={24} />,
   MdPointOfSale: <MdPointOfSale size={24} />,
@@ -19,9 +19,14 @@ const iconMap = {
 function LandingPage() {
   const navigate = useNavigate();
   const [workerName, setWorkerName] = useState("");
+  const [workerInfo, setWorkerInfo] = useState<Worker>({} as Worker);
   const [workerRoles, setWorkerRoles] = useState<WorkerRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState("");
+
+  // Password change modal state
+  const [employeeId, setEmployeeId] = useState("");
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchWorkerData = async () => {
@@ -29,20 +34,42 @@ function LandingPage() {
       try {
         const currentWorker = localStorage.getItem("currentWorker");
         if (currentWorker) {
+          console.log("Current Worker from localStorage:", currentWorker);
           const parsedWorker = JSON.parse(currentWorker);
           setWorkerName(parsedWorker.shortenedName || "");
           setWorkerRoles(parsedWorker.data?.roles || []);
+
+          // Check if user is pending
+          if (parsedWorker.data?.worker?.status === "PENDING") {
+            setEmployeeId(parsedWorker.data.worker.employee_id);
+            setIsPasswordModalOpen(true);
+          }
         } else {
           const result = await getCurrentWorker();
           if (result.success) {
-            const { first_name, middle_name, last_name } =
+            console.log(result);
+            setWorkerInfo(result?.data?.worker || ({} as Worker));
+            const { first_name, middle_name, last_name, employee_id, status } =
               result?.data?.worker || {};
             const shortenedName = `${first_name?.charAt(0)}. ${
               middle_name ? middle_name.charAt(0) + ". " : ""
             }${last_name}`;
 
+            const currentWorker = { ...result, shortenedName: shortenedName };
             setWorkerName(shortenedName);
+            setEmployeeId(employee_id || "");
+            localStorage.setItem(
+              "currentWorker",
+              JSON.stringify(currentWorker)
+            );
+
+            // Set worker roles
             setWorkerRoles(result?.data?.roles || []);
+
+            // Check if user is pending
+            if (status === "PENDING") {
+              setIsPasswordModalOpen(true);
+            }
           } else {
             console.error("Failed to fetch worker data:", result?.error);
             // If we can't get worker data, redirect to login
@@ -59,6 +86,22 @@ function LandingPage() {
     fetchWorkerData();
   }, [navigate]);
 
+  // Handle successful password update
+  const handlePasswordUpdateSuccess = () => {
+    setIsPasswordModalOpen(false);
+    // Update the localStorage with the new status
+    const currentWorker = localStorage.getItem("currentWorker");
+    if (currentWorker) {
+      const parsedWorker = JSON.parse(currentWorker);
+      if (parsedWorker.data?.worker) {
+        parsedWorker.data.worker.status = "ACTIVE";
+        localStorage.setItem("currentWorker", JSON.stringify(parsedWorker));
+      }
+    }
+
+    toast.success("Your account is now active");
+  };
+
   // Update the current time every second
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -69,8 +112,28 @@ function LandingPage() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Handle clock out
+  const handleClockOut = async () => {
+    const result = await signOut();
+    if (result.success) {
+      await createAuditLog({
+        employee_id: workerInfo.employee_id,
+        email: workerInfo.email,
+        action_type: "LOG OUT",
+        details: `Account "${workerInfo.email}" log off the system`,
+        on_page: "Landing Page",
+      });
+      localStorage.removeItem("currentWorker");
+      navigate("/");
+    } else {
+      console.error(result.message);
+    }
+  };
+
   return (
     <main className="bg-secondary min-h-screen text-primary font-outfit relative overflow-hidden">
+      <Toaster position="top-right" />
+
       {/* Wave SVG - positioned at the bottom */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg
@@ -165,10 +228,10 @@ function LandingPage() {
               {/* Add a way to clock out */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => navigate("/")}
+                  onClick={handleClockOut}
                   className="w-full flex items-center justify-center p-3 rounded-lg bg-primary text-white hover:bg-red-700 transition-colors gap-2"
                 >
-                  Log Out
+                  Clock Out
                 </button>
               </div>
 
@@ -181,6 +244,13 @@ function LandingPage() {
           )}
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      <PasswordChangeModal
+        isOpen={isPasswordModalOpen}
+        employeeId={employeeId}
+        onSuccess={handlePasswordUpdateSuccess}
+      />
     </main>
   );
 }

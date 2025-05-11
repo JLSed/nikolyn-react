@@ -2,12 +2,11 @@ import { ReactNode, useEffect, useState } from "react";
 import { signOut } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 import LinkButton from "./LinkButton";
-import { getCurrentWorker } from "../lib/supabase";
+import { createAuditLog, getCurrentWorker } from "../lib/supabase";
 import { WorkerRole } from "../types/worker";
 import { GrSystem } from "react-icons/gr";
 import { MdPointOfSale, MdInventory, MdDashboard } from "react-icons/md";
-import PasswordChangeModal from "./PasswordChangeModal";
-import { toast, Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 
 const iconMap: Record<string, ReactNode> = {
   GrSystem: <GrSystem />,
@@ -18,49 +17,33 @@ const iconMap: Record<string, ReactNode> = {
 
 function NavBar() {
   const navigate = useNavigate();
+  const currentWorker = JSON.parse(
+    localStorage.getItem("currentWorker") || "{}"
+  );
   const [workerName, setworkerName] = useState("Nikolyn's Laundry Shop");
   const [workerRoles, setWorkerRoles] = useState<WorkerRole[] | undefined>([]);
   const [isClockOutModalOpen, setIsClockOutModalOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
-  const [isPendingUser, setIsPendingUser] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     const displayworkerName = async () => {
-      const currentWorker = localStorage.getItem("currentWorker");
       if (currentWorker) {
-        const parsedWorker = JSON.parse(currentWorker);
-        setworkerName(parsedWorker.shortenedName);
-        setWorkerRoles(parsedWorker.data?.roles);
-
-        // Check if user is pending
-        if (parsedWorker.data?.worker?.status === "PENDING") {
-          setIsPendingUser(true);
-          setEmployeeId(parsedWorker.data.worker.employee_id);
-          setIsPasswordModalOpen(true);
-        }
+        setworkerName(currentWorker.shortenedName);
+        setWorkerRoles(currentWorker.data?.roles);
       } else {
         const result = await getCurrentWorker();
         if (result.success) {
           console.log(result);
-          const { first_name, middle_name, last_name, employee_id, status } =
+          const { first_name, middle_name, last_name } =
             result?.data?.worker || {};
           const shortenedName = `${first_name?.charAt(0)}. ${
             middle_name ? middle_name.charAt(0) + ". " : ""
           }${last_name}`;
           const currentWorker = { ...result, shortenedName: shortenedName };
           setworkerName(shortenedName);
-          setEmployeeId(employee_id || "");
           localStorage.setItem("currentWorker", JSON.stringify(currentWorker));
           // Check user roles
           setWorkerRoles(result?.data?.roles);
-
-          // Check if user is pending
-          if (status === "PENDING") {
-            setIsPendingUser(true);
-            setIsPasswordModalOpen(true);
-          }
         } else {
           console.error("Failed to fetch worker data:", result?.error);
         }
@@ -69,26 +52,16 @@ function NavBar() {
     displayworkerName();
   }, []);
 
-  const handlePasswordUpdateSuccess = () => {
-    setIsPasswordModalOpen(false);
-    setIsPendingUser(false);
-
-    // Update the localStorage with the new status
-    const currentWorker = localStorage.getItem("currentWorker");
-    if (currentWorker) {
-      const parsedWorker = JSON.parse(currentWorker);
-      if (parsedWorker.data?.worker) {
-        parsedWorker.data.worker.status = "ACTIVE";
-        localStorage.setItem("currentWorker", JSON.stringify(parsedWorker));
-      }
-    }
-
-    toast.success("Your account is now active");
-  };
-
   const handleClockOut = async () => {
     const result = await signOut();
     if (result.success) {
+      await createAuditLog({
+        employee_id: currentWorker.data.worker.employee_id,
+        email: currentWorker.data.worker.email,
+        action_type: "LOG OUT",
+        details: `Account "${currentWorker.data.worker.email}" log off the system`,
+        on_page: "Clock Out",
+      });
       localStorage.removeItem("currentWorker");
       setIsClockOutModalOpen(false);
       navigate("/");
@@ -166,11 +139,6 @@ function NavBar() {
             </div>
           </div>
         )}
-        <PasswordChangeModal
-          isOpen={isPasswordModalOpen}
-          employeeId={employeeId}
-          onSuccess={handlePasswordUpdateSuccess}
-        />
       </nav>
     </>
   );

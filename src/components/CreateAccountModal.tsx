@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { IoPersonAdd } from "react-icons/io5";
 import { WorkerRole } from "../types/worker";
-import { createWorker } from "../lib/supabase";
+import { checkEmailExists, createWorker } from "../lib/supabase";
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ function CreateAccountModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = () => {
+  const validateForm = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.first_name.trim())
@@ -48,14 +48,28 @@ function CreateAccountModal({
     if (!formData.last_name.trim())
       newErrors.last_name = "Last name is required";
 
-    // Email validation
+    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
+    if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
+      toast.error("Please enter a valid email address");
     }
 
+    // Check if email already exists
+    if (formData.email && emailRegex.test(formData.email) && !newErrors.email) {
+      setIsProcessing(true);
+      try {
+        const result = await checkEmailExists(formData.email);
+        if (result.success && result.data) {
+          newErrors.email = "This email is already in use";
+          toast.error("This email is already in use");
+        }
+      } catch (error) {
+        console.error("Error checking email:", error);
+      } finally {
+        setIsProcessing(false);
+      }
+    }
     // Phone number validation
     const phoneRegex = /^(09|\+639)\d{9}$/;
     if (formData.contact_number && !phoneRegex.test(formData.contact_number)) {
@@ -63,8 +77,15 @@ function CreateAccountModal({
         "Please enter a valid Philippine phone number (e.g., 09XXXXXXXXX or +639XXXXXXXXX)";
     }
 
+    // Role validation
+    if (selectedRoles.length === 0) {
+      newErrors.roles = "Please select at least one role";
+      toast.error("Please select at least one role");
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   const handleInputChange = (
@@ -86,39 +107,40 @@ function CreateAccountModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationResult = await validateForm();
+    if (validationResult === false) {
+      return;
+    } else {
+      setIsProcessing(true);
 
-    if (!validateForm()) return;
+      try {
+        const result = await createWorker({
+          first_name: formData.first_name,
+          middle_name: formData.middle_name || null,
+          last_name: formData.last_name,
+          email: formData.email,
+          contact_number: formData.contact_number || null,
+          address: formData.address || null,
+          password: formData.password,
+          role_ids: selectedRoles,
+        });
 
-    setIsProcessing(true);
-
-    try {
-      const result = await createWorker({
-        first_name: formData.first_name,
-        middle_name: formData.middle_name || null,
-        last_name: formData.last_name,
-        email: formData.email,
-        contact_number: formData.contact_number || null,
-        address: formData.address || null,
-        password: formData.password,
-        role_ids: selectedRoles,
-      });
-
-      if (result.success) {
-        toast.success("Account created successfully");
-        resetForm();
-        onSuccess();
-        onClose();
-      } else {
-        toast.error(result.error?.message || "Failed to create account");
+        if (result.success) {
+          toast.success("Account created successfully");
+          resetForm();
+          onSuccess();
+          onClose();
+        } else {
+          toast.error(result.error?.message || "Failed to create account");
+        }
+      } catch (error) {
+        console.error("Error creating account:", error);
+        toast.error("An unexpected error occurred");
+      } finally {
+        setIsProcessing(false);
       }
-    } catch (error) {
-      console.error("Error creating account:", error);
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsProcessing(false);
     }
   };
-
   const resetForm = () => {
     setFormData({
       first_name: "",

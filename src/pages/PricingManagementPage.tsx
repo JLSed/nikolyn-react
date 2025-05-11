@@ -12,13 +12,15 @@ import {
   updateService,
   addLaundryType,
   addService,
+  createAuditLog,
 } from "../lib/supabase";
 import { LaundryType, Service } from "../types/laundry";
-import { AiOutlineArrowLeft } from "react-icons/ai";
 import { FaArrowLeft } from "react-icons/fa6";
+import { useConfirm } from "../components/ConfirmDialog";
 
 function PricingManagementPage() {
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
   const [laundryTypes, setLaundryTypes] = useState<LaundryType[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,30 +88,45 @@ function PricingManagementPage() {
     setIsAddingLaundry(false);
   };
 
-  const handleDeleteLaundryType = async (typeId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this laundry type? This action cannot be undone."
-      )
-    ) {
-      setIsProcessing(true);
-      try {
-        const result = await deleteLaundryType(typeId);
-        if (result.success) {
-          setLaundryTypes(
-            laundryTypes.filter((type) => type.type_id !== typeId)
-          );
-          toast.success("Laundry type deleted successfully");
-        } else {
-          toast.error("Failed to delete laundry type");
+  const handleDeleteLaundryType = async (
+    typeId: string,
+    laundryName: string
+  ) => {
+    confirm({
+      title: "Delete Laundry Type",
+      message: `Are you sure you want to delete ${laundryName}? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          const result = await deleteLaundryType(typeId);
+          if (result.success) {
+            setLaundryTypes(
+              laundryTypes.filter((type) => type.type_id !== typeId)
+            );
+            toast.success("Laundry type deleted successfully");
+            const currentWorker = JSON.parse(
+              localStorage.getItem("currentWorker") || "{}"
+            );
+            await createAuditLog({
+              employee_id: currentWorker.data?.worker?.employee_id || "",
+              email: currentWorker.data?.worker?.email || "",
+              action_type: "DELETE LAUNDRY TYPE",
+              details: `Deleted ${laundryName} laundry type`,
+              on_page: "Pricing Management",
+            });
+          } else {
+            toast.error("Failed to delete laundry type");
+          }
+        } catch (error) {
+          console.error("Error deleting laundry type:", error);
+          toast.error("An error occurred while deleting");
+        } finally {
+          setIsProcessing(false);
         }
-      } catch (error) {
-        console.error("Error deleting laundry type:", error);
-        toast.error("An error occurred while deleting");
-      } finally {
-        setIsProcessing(false);
-      }
-    }
+      },
+    });
   };
 
   const handleSaveLaundryType = async () => {
@@ -132,6 +149,16 @@ function PricingManagementPage() {
           )
         );
         toast.success("Laundry type updated successfully");
+        const currentWorker = JSON.parse(
+          localStorage.getItem("currentWorker") || "{}"
+        );
+        await createAuditLog({
+          employee_id: currentWorker.data?.worker?.employee_id || "",
+          email: currentWorker.data?.worker?.email || "",
+          action_type: "UPDATE LAUNDRY TYPE",
+          details: `Edited ${editingLaundryType.cloth_name} laundry type`,
+          on_page: "Pricing Management",
+        });
         setIsLaundryModalOpen(false);
       } else {
         toast.error("Failed to update laundry type");
@@ -170,6 +197,16 @@ function PricingManagementPage() {
           setLaundryTypes([...laundryTypes, result.data]);
         }
         toast.success("New laundry type added successfully");
+        const currentWorker = JSON.parse(
+          localStorage.getItem("currentWorker") || "{}"
+        );
+        await createAuditLog({
+          employee_id: currentWorker.data?.worker?.employee_id || "",
+          email: currentWorker.data?.worker?.email || "",
+          action_type: "CREATE LAUNDRY TYPE",
+          details: `Added ${newLaundryType.cloth_name} laundry type`,
+          on_page: "Pricing Management",
+        });
         setIsLaundryModalOpen(false);
       } else {
         toast.error("Failed to add new laundry type");
@@ -189,30 +226,45 @@ function PricingManagementPage() {
     setIsAddingService(false);
   };
 
-  const handleDeleteService = async (serviceId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this service? This action cannot be undone."
-      )
-    ) {
-      setIsProcessing(true);
-      try {
-        const result = await deleteService(serviceId);
-        if (result.success) {
-          setServices(
-            services.filter((service) => service.service_id !== serviceId)
-          );
-          toast.success("Service deleted successfully");
-        } else {
-          toast.error("Failed to delete service");
+  const handleDeleteService = async (
+    serviceId: string,
+    serviceName: string
+  ) => {
+    confirm({
+      title: "Delete Service",
+      message: `Are you sure you want to delete ${serviceName}? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        setIsProcessing(true);
+        try {
+          const result = await deleteService(serviceId);
+          if (result.success) {
+            setServices(
+              services.filter((service) => service.service_id !== serviceId)
+            );
+            toast.success("Service deleted successfully");
+            const currentWorker = JSON.parse(
+              localStorage.getItem("currentWorker") || "{}"
+            );
+            await createAuditLog({
+              employee_id: currentWorker.data?.worker?.employee_id || "",
+              email: currentWorker.data?.worker?.email || "",
+              action_type: "DELETE SERVICE",
+              details: `Deleted ${serviceName} Service`,
+              on_page: "Pricing Management",
+            });
+          } else {
+            toast.error("Failed to delete service");
+          }
+        } catch (error) {
+          console.error("Error deleting service:", error);
+          toast.error("An error occurred while deleting");
+        } finally {
+          setIsProcessing(false);
         }
-      } catch (error) {
-        console.error("Error deleting service:", error);
-        toast.error("An error occurred while deleting");
-      } finally {
-        setIsProcessing(false);
-      }
-    }
+      },
+    });
   };
 
   const handleSaveService = async () => {
@@ -234,6 +286,16 @@ function PricingManagementPage() {
           )
         );
         toast.success("Service updated successfully");
+        const currentWorker = JSON.parse(
+          localStorage.getItem("currentWorker") || "{}"
+        );
+        await createAuditLog({
+          employee_id: currentWorker.data?.worker?.employee_id || "",
+          email: currentWorker.data?.worker?.email || "",
+          action_type: "UPDATE SERVICE",
+          details: `Updated ${editingService.service_name} Service`,
+          on_page: "Pricing Management",
+        });
         setIsServiceModalOpen(false);
       } else {
         toast.error("Failed to update service");
@@ -271,6 +333,16 @@ function PricingManagementPage() {
           setServices([...services, result.data]);
         }
         toast.success("New service added successfully");
+        const currentWorker = JSON.parse(
+          localStorage.getItem("currentWorker") || "{}"
+        );
+        await createAuditLog({
+          employee_id: currentWorker.data?.worker?.employee_id || "",
+          email: currentWorker.data?.worker?.email || "",
+          action_type: "CREATE SERVICE",
+          details: `Added ${newService.service_name} Service`,
+          on_page: "Pricing Management",
+        });
         setIsServiceModalOpen(false);
       } else {
         toast.error("Failed to add new service");
@@ -332,7 +404,12 @@ function PricingManagementPage() {
                     <FaEdit size={18} />
                   </button>
                   <button
-                    onClick={() => handleDeleteLaundryType(laundryType.type_id)}
+                    onClick={() =>
+                      handleDeleteLaundryType(
+                        laundryType.type_id,
+                        laundryType.cloth_name
+                      )
+                    }
                     className="absolute right-2 top-2 text-gray-500 hover:text-red-600"
                     title="Delete"
                     disabled={isProcessing}
@@ -398,7 +475,12 @@ function PricingManagementPage() {
                     <FaEdit size={18} />
                   </button>
                   <button
-                    onClick={() => handleDeleteService(service.service_id)}
+                    onClick={() =>
+                      handleDeleteService(
+                        service.service_id,
+                        service.service_name
+                      )
+                    }
                     className="absolute right-2 top-2 text-gray-500 hover:text-red-600"
                     title="Delete"
                     disabled={isProcessing}

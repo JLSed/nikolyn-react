@@ -10,9 +10,11 @@ import { BsCash } from "react-icons/bs";
 import { IMAGE } from "../constants/images";
 import { AiOutlineAudit } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
+import { useConfirm } from "../components/ConfirmDialog"; // Import the confirm dialog hook
 
 function CashierPage() {
   const navigate = useNavigate();
+  const { confirm } = useConfirm(); // Add the confirm hook
   const [selectedServices, setSelectedServices] = useState<SelectedServices>(
     {}
   );
@@ -98,20 +100,7 @@ function CashierPage() {
     }
   };
 
-  const handleCompletePayment = async () => {
-    if (
-      Object.keys(selectedServices).length === 0 &&
-      Object.keys(orderProducts).length === 0
-    ) {
-      toast.error("Please add services or products to your order");
-      return;
-    }
-
-    if (!paymentMethod) {
-      toast.error("Please select a payment method");
-      return;
-    }
-
+  const processOrder = async () => {
     setIsProcessing(true);
     const today = new Date();
     const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -151,6 +140,7 @@ function CashierPage() {
         setSelectedServices({});
         setOrderProducts({});
         setOrderTotal(0);
+        setCustomerName("");
 
         // Refresh product inventory
         const productsResult = await getAllProducts();
@@ -166,6 +156,42 @@ function CashierPage() {
       console.error("Exception in payment processing:", error);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleCompletePayment = async () => {
+    if (
+      Object.keys(selectedServices).length === 0 &&
+      Object.keys(orderProducts).length === 0
+    ) {
+      toast.error("Please add services or products to your order");
+      return;
+    }
+
+    if (!paymentMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
+
+    if (!customerName.trim()) {
+      toast.error("Please enter customer name");
+      return;
+    }
+
+    // Check if order total exceeds ₱10,000
+    if (orderTotal > 10000) {
+      confirm({
+        title: "High Value Order",
+        message: `This order total is ₱${orderTotal.toFixed(
+          2
+        )}, which exceeds ₱10,000. Are you sure you want to proceed with this high-value order?`,
+        confirmText: "Yes, Process Order",
+        cancelText: "Cancel",
+        onConfirm: processOrder,
+      });
+    } else {
+      // If order is below threshold, process normally
+      processOrder();
     }
   };
 
@@ -331,6 +357,7 @@ function CashierPage() {
               <input
                 onChange={(e) => setCustomerName(e.target.value)}
                 type="text"
+                value={customerName}
                 placeholder="e.g Juan Cruz"
                 className="p-2 w-full rounded-lg"
               />

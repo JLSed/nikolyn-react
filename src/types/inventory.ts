@@ -14,6 +14,10 @@ export interface ProductEntry {
   expiration_date: string;
   purchased_date: string;
   quantity: number;
+  supplier: string;
+  or_id: string;
+  damaged_quantity: number;
+  missing_quantity: number;
 }
 
 export interface ProductItemEntries extends ProductEntry {

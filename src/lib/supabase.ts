@@ -104,6 +104,10 @@ export async function getAllProducts(): Promise<
       expiration_date,
       purchased_date,
       quantity,
+      supplier,
+      or_id,
+      damaged_quantity,
+      missing_quantity,
       TBL_PRODUCT_ITEM (
         item_name,
         item_id,
@@ -684,6 +688,84 @@ export async function getWorkerByEmployeeId(
     return { success: true, data: data as Worker };
   } catch (error) {
     console.error("Exception fetching worker:", error);
+    return { success: false, error };
+  }
+}
+
+export async function updateProductEntry(
+  entryId: string,
+  updates: Partial<ProductEntry>
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_PRODUCT_ENTRY")
+      .update(updates)
+      .eq("entry_id", entryId);
+
+    if (error) {
+      console.error("Error updating product entry:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception updating product entry:", error);
+    return { success: false, error };
+  }
+}
+
+export async function deleteProductItem(
+  itemId: string
+): Promise<ApiResponse<any>> {
+  try {
+    // Then delete the product item itself
+    const { error: itemError } = await supabase
+      .from("TBL_PRODUCT_ITEM")
+      .delete()
+      .eq("item_id", itemId);
+
+    if (itemError) {
+      console.error("Error deleting product item:", itemError);
+      return {
+        success: false,
+        error: "Failed to delete product item",
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception deleting product item:", error);
+    return {
+      success: false,
+      error: "An unexpected error occurred while deleting the product",
+    };
+  }
+}
+
+export async function updateProductItem(
+  itemId: string,
+  updates: {
+    item_name: string;
+    category: string;
+    price: number;
+    weight: string;
+    barcode: string;
+  }
+): Promise<ApiResponse<any>> {
+  try {
+    const { error } = await supabase
+      .from("TBL_PRODUCT_ITEM")
+      .update(updates)
+      .eq("item_id", itemId);
+
+    if (error) {
+      console.error("Error updating product item:", error);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Exception updating product item:", error);
     return { success: false, error };
   }
 }

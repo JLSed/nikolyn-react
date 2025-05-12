@@ -18,6 +18,10 @@ function AddProductEntryModal({
     expiration_date: "",
     purchased_date: "",
     quantity: 1,
+    supplier: "", // New field
+    or_id: "", // New field
+    damaged_quantity: 0, // New field
+    missing_quantity: 0, // New field
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,6 +60,10 @@ function AddProductEntryModal({
         expiration_date: "",
         purchased_date: "",
         quantity: 1,
+        supplier: "",
+        or_id: "",
+        damaged_quantity: 0,
+        missing_quantity: 0,
       });
       onClose();
       onSuccess();
@@ -121,50 +129,115 @@ function AddProductEntryModal({
               </p>
             </div>
 
-            <div className="mb-4">
-              <label className="block mb-1">Expiration Date</label>
-              <input
-                type="date"
-                required
-                className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
-                value={formData.expiration_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    expiration_date: e.target.value,
-                  }))
-                }
-              />
-            </div>
+            {/* Grid layout for form fields */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block mb-1">Supplier</label>
+                <input
+                  type="text"
+                  placeholder="Enter supplier name"
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.supplier}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      supplier: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block mb-1">Quantity</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.quantity}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      quantity: parseInt(e.target.value),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="mb-4">
-              <label className="block mb-1">Purchase Date</label>
-              <input
-                type="date"
-                required
-                className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
-                value={formData.purchased_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    purchased_date: e.target.value,
-                  }))
-                }
-              />
-            </div>
+              <div>
+                <label className="block mb-1">Expiration Date</label>
+                <input
+                  type="date"
+                  required
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.expiration_date}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiration_date: e.target.value,
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="mb-4">
-              <label className="block mb-1">Quantity</label>
+              <div>
+                <label className="block mb-1">Purchase Date</label>
+                <input
+                  type="date"
+                  required
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.purchased_date}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      purchased_date: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Damaged Quantity</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.damaged_quantity}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      damaged_quantity: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Missing Quantity</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
+                  value={formData.missing_quantity}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      missing_quantity: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="col-span-2 mb-4">
+              <label className="block mb-1">Order Receipt/Invoice ID</label>
               <input
-                type="number"
-                min="1"
-                required
+                type="text"
+                placeholder="Enter OR or invoice number"
                 className="w-full p-2 border border-primary rounded-lg font-semibold bg-secondary"
-                value={formData.quantity}
+                value={formData.or_id}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    quantity: parseInt(e.target.value),
+                    or_id: e.target.value,
                   }))
                 }
               />

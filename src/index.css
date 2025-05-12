@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-secondary; /* Use Tailwind's secondary color */
+  @apply bg-secondary;
 }
 
 @keyframes shimmer {

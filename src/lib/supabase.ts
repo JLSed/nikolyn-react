@@ -18,7 +18,6 @@ import { Order } from "../types/orderlog";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Create a single instance of the Supabase client
 let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
 export const supabase = (() => {
@@ -155,7 +154,6 @@ export async function addProductEntry(
 }
 
 export async function getProductCategories(): Promise<ApiResponse<string[]>> {
-  // Use distinct to get unique categories
   const { data, error } = (await supabase.rpc("get_categories")) as {
     data: string[] | null;
     error: any;
@@ -219,7 +217,6 @@ export async function createOrder(
 
     const updateResults = await Promise.allSettled(updatePromises);
     console.log("Update results:", updateResults);
-    // Check for any failed updates
     const failedUpdates = updateResults.filter(
       (result) =>
         result.status === "rejected" ||
@@ -330,7 +327,6 @@ export async function getAllWorkers(): Promise<ApiResponse<WorkerWithRoles[]>> {
   return { success: false, error: "No workers found" };
 }
 
-// Get all available roles
 export async function getAllRoles(): Promise<ApiResponse<WorkerRole[]>> {
   const { data, error } = (await supabase
     .from("TBL_ROLE")
@@ -347,7 +343,6 @@ export async function getAllRoles(): Promise<ApiResponse<WorkerRole[]>> {
   return { success: true, data: data };
 }
 
-// Update worker information
 export async function updateWorker(
   employee_id: string,
   updates: Partial<Worker>
@@ -365,13 +360,11 @@ export async function updateWorker(
   return { success: true, data: data };
 }
 
-// Update worker roles (remove existing ones and add new ones)
 export async function updateWorkerRoles(
   employee_id: string,
   role_ids: string[]
 ): Promise<ApiResponse<any>> {
   try {
-    // 1. Delete existing roles
     const { error: deleteError } = await supabase
       .from("TBL_WORKER_ROLE")
       .delete()
@@ -381,7 +374,6 @@ export async function updateWorkerRoles(
       throw deleteError;
     }
 
-    // 2. Insert new roles
     if (role_ids.length > 0) {
       const rolesToInsert = role_ids.map((role_id) => ({
         employee_id,
@@ -408,7 +400,6 @@ export async function createWorker(
   request: CreateWorkerRequest
 ): Promise<ApiResponse<Worker>> {
   try {
-    // 1. Create the auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: request.email,
       password: request.password,
@@ -419,7 +410,6 @@ export async function createWorker(
       return { success: false, error: authError };
     }
 
-    // 2. Create the worker record
     const { data: workerData, error: workerError } = (await supabase
       .from("TBL_WORKER")
       .insert([
@@ -445,7 +435,6 @@ export async function createWorker(
       return { success: false, error: workerError };
     }
 
-    // 3. Assign roles if any are selected
     if (request.role_ids.length > 0) {
       const rolesToInsert = request.role_ids.map((role_id) => ({
         employee_id: workerData?.employee_id,
@@ -468,7 +457,6 @@ export async function createWorker(
   }
 }
 
-// Laundry Type APIs
 export async function deleteLaundryType(
   typeId: string
 ): Promise<ApiResponse<any>> {
@@ -532,7 +520,6 @@ export async function addLaundryType(
   return { success: true, data: data[0] };
 }
 
-// Service APIs
 export async function deleteService(
   serviceId: string
 ): Promise<ApiResponse<any>> {
@@ -596,7 +583,6 @@ export async function addService(
   return { success: true, data: data[0] };
 }
 
-// Add this function to check if an email already exists
 export async function checkEmailExists(
   email: string
 ): Promise<ApiResponse<boolean>> {
@@ -718,7 +704,6 @@ export async function deleteProductItem(
   itemId: string
 ): Promise<ApiResponse<any>> {
   try {
-    // Then delete the product item itself
     const { error: itemError } = await supabase
       .from("TBL_PRODUCT_ITEM")
       .delete()

@@ -24,7 +24,6 @@ function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState("");
 
-  // Password change modal state
   const [employeeId, setEmployeeId] = useState("");
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
@@ -39,7 +38,6 @@ function LandingPage() {
           setWorkerName(parsedWorker.shortenedName || "");
           setWorkerRoles(parsedWorker.data?.roles || []);
 
-          // Check if user is pending
           if (parsedWorker.data?.worker?.status === "PENDING") {
             setEmployeeId(parsedWorker.data.worker.employee_id);
             setIsPasswordModalOpen(true);
@@ -63,16 +61,14 @@ function LandingPage() {
               JSON.stringify(currentWorker)
             );
 
-            // Set worker roles
             setWorkerRoles(result?.data?.roles || []);
 
-            // Check if user is pending
             if (status === "PENDING") {
               setIsPasswordModalOpen(true);
             }
           } else {
             console.error("Failed to fetch worker data:", result?.error);
-            // If we can't get worker data, redirect to login
+            // If can't get worker data, redirect to login
             navigate("/");
           }
         }
@@ -86,7 +82,6 @@ function LandingPage() {
     fetchWorkerData();
   }, [navigate]);
 
-  // Handle successful password update
   const handlePasswordUpdateSuccess = () => {
     setIsPasswordModalOpen(false);
     // Update the localStorage with the new status
@@ -102,17 +97,14 @@ function LandingPage() {
     toast.success("Your account is now active");
   };
 
-  // Update the current time every second
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
     }, 1000);
 
-    // Clean up interval on unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  // Handle clock out
   const handleClockOut = async () => {
     const result = await signOut();
     if (result.success) {
@@ -134,7 +126,6 @@ function LandingPage() {
     <main className="bg-secondary min-h-screen text-primary font-outfit relative overflow-hidden">
       <Toaster position="top-right" />
 
-      {/* Wave SVG - positioned at the bottom */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -149,9 +140,7 @@ function LandingPage() {
         </svg>
       </div>
 
-      {/* Main content with split layout */}
       <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row min-h-screen relative z-10">
-        {/* Left side - Text content */}
         <div className="md:w-1/2 flex flex-col justify-center mb-10 md:mb-0 md:pr-8">
           <div className="relative">
             <img
@@ -225,13 +214,12 @@ function LandingPage() {
                 })}
               </div>
 
-              {/* Add a way to clock out */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
                   onClick={handleClockOut}
                   className="w-full flex items-center justify-center p-3 rounded-lg bg-primary text-white hover:bg-red-700 transition-colors gap-2"
                 >
-                  Clock Out
+                  Log Out
                 </button>
               </div>
 

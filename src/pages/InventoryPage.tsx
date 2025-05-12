@@ -3,13 +3,13 @@ import NavBar from "../components/NavBar";
 import AddProductEntryModal from "../components/AddProductEntryModal";
 import { PiStackPlusFill } from "react-icons/pi";
 import { TbStackPush } from "react-icons/tb";
-import { MdDeleteForever } from "react-icons/md"; // Import delete icon
+import { MdDeleteForever } from "react-icons/md";
 import AddProductItemModal from "../components/AddProductItemModal";
 import {
   getAllProducts,
   updateProductEntry,
   createAuditLog,
-  deleteProductItem, // Import the new function (we'll create this)
+  deleteProductItem,
 } from "../lib/supabase";
 import { ProductItem, ProductItemEntries } from "../types/inventory";
 import {
@@ -30,10 +30,7 @@ import EditProductModal from "../components/EditProductModal";
 function InventoryPage() {
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  const [isRemoveItemModalOpen, setIsRemoveItemModalOpen] = useState(false); // New state for remove modal
-  const [selectedItemToRemove, setSelectedItemToRemove] = useState<
-    string | null
-  >(null); // To track which item to remove
+  const [isRemoveItemModalOpen, setIsRemoveItemModalOpen] = useState(false);
   const [products, setProducts] = useState<ProductItemEntries[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
@@ -51,13 +48,12 @@ function InventoryPage() {
     missing_quantity: 0,
   });
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false); // New state for delete operation
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
   const [selectedItemToEdit, setSelectedItemToEdit] =
     useState<ProductItem | null>(null);
   const { confirm } = useConfirm();
 
-  // Group products by item_id to show them together
   const groupedProducts = products.reduce((acc, product) => {
     const itemName = product.TBL_PRODUCT_ITEM.item_name;
     if (!acc[itemName]) {
@@ -122,14 +118,13 @@ function InventoryPage() {
     const numValue = parseInt(value) || 0;
     setEditableEntry((prev) => ({
       ...prev,
-      [field]: numValue >= 0 ? numValue : 0, // Ensure no negative values
+      [field]: numValue >= 0 ? numValue : 0,
     }));
   };
 
   const handleUpdateStock = async () => {
     if (!selectedEntry) return;
 
-    // If nothing changed, just close the modal
     if (
       editableEntry.damaged_quantity ===
         (selectedEntry.damaged_quantity || 0) &&
@@ -155,7 +150,6 @@ function InventoryPage() {
           });
 
           if (result.success) {
-            // Create audit log
             const currentWorker = JSON.parse(
               localStorage.getItem("currentWorker") || "{}"
             );
@@ -175,7 +169,7 @@ function InventoryPage() {
 
             toast.success("Stock information updated successfully");
             closeEntryDetails();
-            fetchProducts(); // Refresh the products list
+            fetchProducts();
           } else {
             toast.error("Failed to update stock information");
           }
@@ -189,7 +183,6 @@ function InventoryPage() {
     });
   };
 
-  // New function to handle product item removal
   const handleRemoveProductItem = async (itemId: string, itemName: string) => {
     confirm({
       title: "Remove Product Item",
@@ -203,7 +196,6 @@ function InventoryPage() {
           const result = await deleteProductItem(itemId);
 
           if (result.success) {
-            // Create audit log
             const currentWorker = JSON.parse(
               localStorage.getItem("currentWorker") || "{}"
             );
@@ -216,7 +208,7 @@ function InventoryPage() {
             });
 
             toast.success(`Product "${itemName}" removed successfully`);
-            fetchProducts(); // Refresh the products list
+            fetchProducts();
           } else {
             toast.error(result.error || "Failed to remove product");
           }
@@ -225,20 +217,18 @@ function InventoryPage() {
           toast.error("An error occurred while removing the product");
         } finally {
           setIsDeleting(false);
-          setSelectedItemToRemove(null);
         }
       },
     });
   };
 
   const handleEditButtonClick = (e: React.MouseEvent, item: ProductItem) => {
-    e.stopPropagation(); // Prevent row expansion when clicking edit
+    e.stopPropagation();
     setSelectedItemToEdit(item);
 
     setIsEditItemModalOpen(true);
   };
 
-  // Filter products based on search term
   const filteredProducts = Object.entries(groupedProducts).filter(
     ([itemName]) => itemName.toLowerCase().includes(searchTerm.toLowerCase())
   );

@@ -28,7 +28,6 @@ Chart.register(...registerables);
 
 function DashboardPage() {
   const navigate = useNavigate();
-  // State for all dashboard data
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<SalesByPaymentMethod[]>(
@@ -49,7 +48,6 @@ function DashboardPage() {
     "desc"
   );
 
-  // Chart refs
   const salesChartRef = useRef<HTMLCanvasElement | null>(null);
   const salesChartInstance = useRef<Chart | null>(null);
   const paymentChartRef = useRef<HTMLCanvasElement | null>(null);
@@ -57,12 +55,10 @@ function DashboardPage() {
   const statusChartRef = useRef<HTMLCanvasElement | null>(null);
   const statusChartInstance = useRef<Chart | null>(null);
 
-  // Fetch all dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch all data in parallel
         const [
           summaryResult,
           recentSalesResult,
@@ -81,7 +77,6 @@ function DashboardPage() {
           getDailySales(),
         ]);
 
-        // Set state with results
         if (summaryResult.success) setSummary(summaryResult.data || null);
         if (recentSalesResult.success)
           setRecentSales(recentSalesResult.data || []);
@@ -106,16 +101,13 @@ function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  // Setup charts when data is loaded
   useEffect(() => {
-    // Only create charts when we have data and the refs are available
     if (
       !loading &&
       salesChartRef.current &&
       paymentChartRef.current &&
       statusChartRef.current
     ) {
-      // Setup Recent Sales Chart
       if (salesChartInstance.current) {
         salesChartInstance.current.destroy();
       }
@@ -169,7 +161,6 @@ function DashboardPage() {
         });
       }
 
-      // Setup Payment Methods Chart
       if (paymentChartInstance.current) {
         paymentChartInstance.current.destroy();
       }
@@ -220,7 +211,6 @@ function DashboardPage() {
         });
       }
 
-      // Setup Status Breakdown Chart
       if (statusChartInstance.current) {
         statusChartInstance.current.destroy();
       }
@@ -270,7 +260,6 @@ function DashboardPage() {
       }
     }
 
-    // Clean up charts when component unmounts
     return () => {
       if (salesChartInstance.current) {
         salesChartInstance.current.destroy();
@@ -350,13 +339,13 @@ function DashboardPage() {
             <AiOutlineAudit />
             Order Log
           </button>
-                    <button
-                      onClick={() => navigate("/pricing-management")}
-                      className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
-                    >
-                      <GrMoney />
-                      Change Pricing
-                    </button>
+          <button
+            onClick={() => navigate("/pricing-management")}
+            className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+          >
+            <GrMoney />
+            Change Pricing
+          </button>
         </div>
       </div>
 
@@ -633,7 +622,7 @@ function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {dailySales
-                    .slice() // Create a copy to avoid mutating original array
+                    .slice()
                     .sort((a, b) => {
                       const dateA = new Date(a.date).getTime();
                       const dateB = new Date(b.date).getTime();

@@ -10,7 +10,6 @@ import {
 } from "../types/dashboard";
 import { ApiResponse } from "../types/api";
 
-// Define types for database responses
 interface OrderRecord {
   status: string;
   total_amount: number;
@@ -28,22 +27,18 @@ interface ProductEntryRecord {
   };
 }
 
-// Get today's revenue and order counts
 export async function getDashboardSummary(): Promise<
   ApiResponse<DashboardSummary>
 > {
   try {
-    // Get today's date at the start of the day
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayISOString = today.toISOString();
 
-    // Get tomorrow's date at the start of the day (for upper bound)
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     const tomorrowISOString = tomorrow.toISOString();
 
-    // Query orders from today only (between start of today and start of tomorrow)
     const { data, error } = await supabase
       .from("TBL_ORDERS")
       .select("status, total_amount")
@@ -64,7 +59,6 @@ export async function getDashboardSummary(): Promise<
     let cancelled = 0;
 
     orders.forEach((order) => {
-      // Only add to revenue if the order is COMPLETE
       if (order.status === "COMPLETE") {
         todayRevenue += order.total_amount;
         completed++;
@@ -98,10 +92,8 @@ export async function getDashboardSummary(): Promise<
   }
 }
 
-// Get recent sales data for the chart (last 7 days)
 export async function getRecentSales(): Promise<ApiResponse<RecentSale[]>> {
   try {
-    // Calculate date 7 days ago
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -118,14 +110,12 @@ export async function getRecentSales(): Promise<ApiResponse<RecentSale[]>> {
 
     const orders = data as OrderRecord[];
 
-    // Group by date and calculate daily totals
     const salesByDate = orders.reduce<Record<string, number>>((acc, order) => {
       const date = new Date(order.created_at).toISOString().split("T")[0];
       acc[date] = (acc[date] || 0) + order.total_amount;
       return acc;
     }, {});
 
-    // Convert to array of objects
     const recentSales: RecentSale[] = Object.entries(salesByDate).map(
       ([date, amount]): RecentSale => ({
         date,
@@ -146,7 +136,6 @@ export async function getRecentSales(): Promise<ApiResponse<RecentSale[]>> {
   }
 }
 
-// Get sales by payment method
 export async function getSalesByPaymentMethod(): Promise<
   ApiResponse<SalesByPaymentMethod[]>
 > {
@@ -161,7 +150,6 @@ export async function getSalesByPaymentMethod(): Promise<
 
     const orders = data as OrderRecord[];
 
-    // Group by payment method
     type MethodSummary = Record<string, { amount: number; count: number }>;
 
     const methodSummary = orders.reduce<MethodSummary>((acc, order) => {
@@ -174,7 +162,6 @@ export async function getSalesByPaymentMethod(): Promise<
       return acc;
     }, {});
 
-    // Convert to array
     const salesByMethod: SalesByPaymentMethod[] = Object.entries(
       methodSummary
     ).map(
@@ -198,7 +185,6 @@ export async function getSalesByPaymentMethod(): Promise<
   }
 }
 
-// Get order status breakdown
 export async function getOrderStatusBreakdown(): Promise<
   ApiResponse<OrderStatusBreakdown[]>
 > {
@@ -211,7 +197,6 @@ export async function getOrderStatusBreakdown(): Promise<
 
     const orders = data as OrderRecord[];
 
-    // Count orders by status
     const statusCounts: Record<string, number> = {
       COMPLETE: 0,
       PENDING: 0,
@@ -226,7 +211,6 @@ export async function getOrderStatusBreakdown(): Promise<
 
     const totalOrders = orders.length;
 
-    // Convert to array with percentages
     const statusBreakdown: OrderStatusBreakdown[] = Object.entries(
       statusCounts
     ).map(
@@ -250,7 +234,6 @@ export async function getOrderStatusBreakdown(): Promise<
   }
 }
 
-// Get low stock products
 export async function getLowStockProducts(
   threshold: number = 5
 ): Promise<ApiResponse<LowStockProduct[]>> {
@@ -268,7 +251,6 @@ export async function getLowStockProducts(
 
     const entries = data as ProductEntryRecord[];
 
-    // Group by item and calculate total quantity
     interface ItemQuantity {
       id: string;
       name: string;
@@ -291,7 +273,6 @@ export async function getLowStockProducts(
       {}
     );
 
-    // Filter low stock items and convert to array
     const lowStockItems: LowStockProduct[] = Object.values(itemQuantities)
       .filter((item) => item.total <= threshold)
       .map(
@@ -301,8 +282,7 @@ export async function getLowStockProducts(
           totalQuantity: item.total,
         })
       )
-      .sort((a, b) => a.totalQuantity - b.totalQuantity); // Sort by quantity ascending
-
+      .sort((a, b) => a.totalQuantity - b.totalQuantity);
     return {
       success: true,
       data: lowStockItems,
@@ -316,7 +296,6 @@ export async function getLowStockProducts(
   }
 }
 
-// Get soon-to-expire products (within the next month)
 export async function getSoonToExpireProducts(): Promise<
   ApiResponse<ExpiringProduct[]>
 > {
@@ -378,20 +357,18 @@ export async function getSoonToExpireProducts(): Promise<
   }
 }
 
-// Get daily sales data
 export async function getDailySales(
   days: number = 30
 ): Promise<ApiResponse<DailySales[]>> {
   try {
-    // Calculate date range
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
     const { data, error } = await supabase
       .from("TBL_ORDERS")
-      .select("created_at, total_amount, status") // Added status to the select
-      .eq("status", "COMPLETE") // Filter for COMPLETE orders only
+      .select("created_at, total_amount, status")
+      .eq("status", "COMPLETE")
       .gte("created_at", startDate.toISOString())
       .lte("created_at", endDate.toISOString());
 
@@ -401,7 +378,6 @@ export async function getDailySales(
 
     const orders = data as OrderRecord[];
 
-    // Group by date
     interface DailySaleSummary {
       revenue: number;
       order_count: number;
@@ -409,7 +385,6 @@ export async function getDailySales(
 
     const salesByDate: Record<string, DailySaleSummary> = {};
 
-    // Create empty entries for each date in the range
     for (
       let d = new Date(startDate);
       d <= endDate;
@@ -419,7 +394,6 @@ export async function getDailySales(
       salesByDate[dateString] = { revenue: 0, order_count: 0 };
     }
 
-    // Fill in actual data
     orders.forEach((order) => {
       const dateString = new Date(order.created_at).toISOString().split("T")[0];
       if (salesByDate[dateString]) {
@@ -428,7 +402,6 @@ export async function getDailySales(
       }
     });
 
-    // Convert to array and calculate change percentage
     const dailySalesArray = Object.entries(salesByDate)
       .sort(
         ([dateA], [dateB]) =>
@@ -446,7 +419,6 @@ export async function getDailySales(
               ((revenue - previousRevenue) / previousRevenue) * 100;
             increase = revenue >= previousRevenue;
           } else if (revenue > 0) {
-            // Previous was 0, but current is not
             change_percentage = 100;
             increase = true;
           }

@@ -2,7 +2,11 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { IoPersonAdd } from "react-icons/io5";
 import { WorkerRole } from "../types/worker";
-import { checkEmailExists, createAuditLog, createWorker } from "../lib/supabase";
+import {
+  checkEmailExists,
+  createAuditLog,
+  createWorker,
+} from "../lib/supabase";
 
 interface CreateAccountModalProps {
   isOpen: boolean;
@@ -77,7 +81,6 @@ function CreateAccountModal({
         "Please enter a valid Philippine phone number (e.g., 09XXXXXXXXX or +639XXXXXXXXX)";
     }
 
-    // Role validation
     if (selectedRoles.length === 0) {
       newErrors.roles = "Please select at least one role";
       toast.error("Please select at least one role");
@@ -127,16 +130,16 @@ function CreateAccountModal({
 
         if (result.success) {
           toast.success("Account created successfully");
-           const currentWorker = JSON.parse(
-                        localStorage.getItem("currentWorker") || "{}"
-                      );
-                      await createAuditLog({
-                        employee_id: currentWorker.data.worker.employee_id,
-                        email: currentWorker.data.worker.email,
-                        action_type: "CREATE ACCOUNT",
-                        details: `Created Account "${formData.email}"`,
-                        on_page: "Create Account Modal",
-                      });
+          const currentWorker = JSON.parse(
+            localStorage.getItem("currentWorker") || "{}"
+          );
+          await createAuditLog({
+            employee_id: currentWorker.data.worker.employee_id,
+            email: currentWorker.data.worker.email,
+            action_type: "CREATE ACCOUNT",
+            details: `Created Account "${formData.email}"`,
+            on_page: "Create Account Modal",
+          });
           resetForm();
           onSuccess();
           onClose();

@@ -24,7 +24,7 @@ function AuditLogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actor, setActor] = useState<Worker | null>(null);
   const [actionTypeFilter, setActionTypeFilter] = useState<string>("ALL");
-  const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const [dateRange, setDateRange] = useState({
     startDate: today,
     endDate: today,
@@ -36,7 +36,6 @@ function AuditLogPage() {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [uniqueActionTypes, setUniqueActionTypes] = useState<string[]>([]);
 
-  // Fetch audit logs data
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
@@ -45,7 +44,6 @@ function AuditLogPage() {
         if (result.success) {
           setLogs(result.data || []);
 
-          // Extract unique action types for filter dropdown
           const actionTypes = Array.from(
             new Set((result.data || []).map((log) => log.action_type))
           );
@@ -65,7 +63,6 @@ function AuditLogPage() {
     fetchLogs();
   }, []);
 
-  // Filter logs based on search term, action type, and date
   const filteredLogs = logs.filter((log) => {
     const logDate = new Date(log.timestamp).toISOString().split("T")[0];
     const matchesSearch =
@@ -81,13 +78,11 @@ function AuditLogPage() {
     return matchesSearch && matchesActionType && matchesDate;
   });
 
-  // Open modal with selected log
   const handleLogClick = async (log: AuditLogWithActor) => {
     setSelectedLog(log);
     setIsModalOpen(true);
 
     try {
-      // Fetch worker details using employee_id
       const result = await getWorkerByEmployeeId(log.employee_id);
       if (result.success) {
         setActor(result?.data || null);
@@ -101,7 +96,6 @@ function AuditLogPage() {
     }
   };
 
-  // Format date for display
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -141,7 +135,6 @@ function AuditLogPage() {
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
 
-      // Set up and trigger download
       const link = document.createElement("a");
       link.setAttribute("href", url);
       link.setAttribute(
@@ -206,7 +199,6 @@ function AuditLogPage() {
             </button>
           </div>
 
-          {/* Collapsible Filter Menu */}
           {isFilterMenuOpen && (
             <div className="mt-4 p-4 bg-white rounded-lg shadow-md border border-gray-200 animate-fadeIn">
               <h3 className="font-bold text-lg mb-3 text-primary">

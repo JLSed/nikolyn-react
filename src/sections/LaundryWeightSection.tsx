@@ -49,7 +49,6 @@ function LaundryWeightSection({
     fetchServices();
   }, []);
 
-  // Handle input changes for laundry weights
   const handleLaundryWeightChange = (
     laundryName: string,
     value: number,
@@ -58,7 +57,6 @@ function LaundryWeightSection({
     setLaundryWeights((prev) => {
       const updated = { ...prev };
 
-      // Only include weights with values > 0
       if (value > 0) {
         updated[laundryName] = { value, limit };
       } else {
@@ -89,7 +87,7 @@ function LaundryWeightSection({
       const newLaundryWeights: Record<string, LaundryWeight> = {};
       let sub_total = 0;
       if (serviceName === "Full Service") {
-        sub_total = price; // Fixed price for full service
+        sub_total = price;
       } else {
         Object.entries(laundryWeights).forEach(([name, { value, limit }]) => {
           newLaundryWeights[name] = {
@@ -216,7 +214,6 @@ function LaundryWeightSection({
                   className="scale-150"
                   value="Wash"
                   type="checkbox"
-                  // Control the checked state based on whether it's in selectedServices
                   checked={!!selectedServices[service.service_name]}
                   onChange={(e) => {
                     handleServiceChange(

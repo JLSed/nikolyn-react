@@ -29,7 +29,6 @@ function EditProductModal({
   const [isEditing, setIsEditing] = useState(false);
   const { confirm } = useConfirm();
 
-  // Update form state if product changes
   useEffect(() => {
     if (product && isOpen) {
       setEditItemForm({
@@ -73,7 +72,6 @@ function EditProductModal({
           });
 
           if (result.success) {
-            // Create audit log
             const currentWorker = JSON.parse(
               localStorage.getItem("currentWorker") || "{}"
             );

@@ -10,15 +10,12 @@ export interface LaundryType {
   limit: number;
   weight_unit: string;
 }
-
-// LaundryWeight now includes laundry_total
 export interface LaundryWeight {
   value: number;
   limit: number;
   laundry_total: number;
 }
 
-// SelectedServices now uses the new LaundryWeight and includes sub_total
 export type SelectedServices = Record<
   string,
   {

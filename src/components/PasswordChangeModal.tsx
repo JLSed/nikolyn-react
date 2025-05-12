@@ -49,7 +49,6 @@ function PasswordChangeModal({
     setIsProcessing(true);
 
     try {
-      // Update password
       const passwordResult = await updatePassword(password);
 
       if (!passwordResult.success) {
@@ -58,7 +57,6 @@ function PasswordChangeModal({
         );
       }
 
-      // Update worker status to ACTIVE
       const statusResult = await updateWorkerStatus(employeeId, "ACTIVE");
 
       if (!statusResult.success) {

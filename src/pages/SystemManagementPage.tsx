@@ -35,11 +35,9 @@ function SystemManagementPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ACTIVE");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Fetch workers and roles data
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch workers
       const workersResult = await getAllWorkers();
       if (workersResult.success) {
         setWorkers(workersResult.data || []);
@@ -47,7 +45,6 @@ function SystemManagementPage() {
         toast.error("Failed to load workers");
       }
 
-      // Fetch available roles
       const rolesResult = await getAllRoles();
       if (rolesResult.success) {
         setAvailableRoles(rolesResult.data || []);
@@ -67,11 +64,8 @@ function SystemManagementPage() {
   }, []);
 
   const handleCreateSuccess = () => {
-    // Refresh worker list
     fetchData();
   };
-
-  // Filter workers based on search term
 
   const filteredWorkers = workers.filter((data) => {
     const fullName = `${data.worker.first_name} ${
@@ -85,7 +79,6 @@ function SystemManagementPage() {
     );
   });
 
-  // Handle worker row click
   const handleWorkerClick = (data: WorkerWithRoles) => {
     setSelectedWorker(data);
     setEditWorker({
@@ -96,7 +89,6 @@ function SystemManagementPage() {
       address: data.worker.address,
     });
 
-    // Extract role IDs from worker roles
     const roleIds = data.worker_roles.map((role) => role.role_id);
     setSelectedRoles(roleIds);
 
@@ -113,14 +105,12 @@ function SystemManagementPage() {
     });
   };
 
-  // Handle save changes
   const handleSaveChanges = async () => {
     if (!selectedWorker) return;
 
     setIsProcessing(true);
 
     try {
-      // Update worker information
       const updateWorkerResult = await updateWorker(
         selectedWorker.worker.employee_id,
         editWorker
@@ -130,7 +120,6 @@ function SystemManagementPage() {
         throw new Error("Failed to update worker information");
       }
 
-      // Update worker roles
       const updateRolesResult = await updateWorkerRoles(
         selectedWorker.worker.employee_id,
         selectedRoles
@@ -139,8 +128,6 @@ function SystemManagementPage() {
       if (!updateRolesResult.success) {
         throw new Error("Failed to update worker roles");
       }
-
-      // Update local state
       setWorkers((prev) =>
         prev.map((workerWithRoles) =>
           workerWithRoles.worker.employee_id ===
@@ -194,7 +181,6 @@ function SystemManagementPage() {
           );
 
           if (result.success) {
-            // Update local state
             setWorkers((prev) =>
               prev.map((worker) =>
                 worker.worker.employee_id === selectedWorker.worker.employee_id
@@ -252,7 +238,6 @@ function SystemManagementPage() {
           );
 
           if (result.success) {
-            // Update local state
             setWorkers((prev) =>
               prev.map((worker) =>
                 worker.worker.employee_id === selectedWorker.worker.employee_id
@@ -406,7 +391,6 @@ function SystemManagementPage() {
           {/* Table Body */}
           <div className="divide-y divide-gray-200">
             {loading ? (
-              // Loading state
               <div className="p-4 text-center">Loading workers...</div>
             ) : filteredWorkers.length > 0 ? (
               // Workers list
@@ -510,7 +494,6 @@ function SystemManagementPage() {
                 </div>
               ))
             ) : (
-              // No results state
               <div className="p-4 text-center text-gray-500">
                 No workers found matching your search.
               </div>

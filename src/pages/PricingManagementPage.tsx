@@ -25,12 +25,10 @@ function PricingManagementPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Edit states
   const [editingLaundryType, setEditingLaundryType] =
     useState<LaundryType | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
-  // New item states
   const [newLaundryType, setNewLaundryType] = useState<
     Omit<LaundryType, "type_id">
   >({
@@ -43,18 +41,15 @@ function PricingManagementPage() {
     price_per_limit: 0,
   });
 
-  // Modal states
   const [isLaundryModalOpen, setIsLaundryModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [isAddingLaundry, setIsAddingLaundry] = useState(false);
   const [isAddingService, setIsAddingService] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Fetch data
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch laundry types
       const laundryTypesResult = await getAllLaundryType();
       if (laundryTypesResult.success) {
         setLaundryTypes(laundryTypesResult.data || []);
@@ -62,7 +57,6 @@ function PricingManagementPage() {
         toast.error("Failed to load laundry types");
       }
 
-      // Fetch services
       const servicesResult = await getAllServices();
       if (servicesResult.success) {
         setServices(servicesResult.data || []);
@@ -81,7 +75,6 @@ function PricingManagementPage() {
     fetchData();
   }, []);
 
-  // Laundry Type Handlers
   const handleEditLaundryType = (laundryType: LaundryType) => {
     setEditingLaundryType(laundryType);
     setIsLaundryModalOpen(true);

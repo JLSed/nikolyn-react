@@ -21,20 +21,17 @@ function LoginPage() {
   const MAX_ATTEMPTS = 5;
   const LOCK_DURATION = 1 * 60;
 
-  // Check for saved lock state on component mount
   useEffect(() => {
     const savedLockData = localStorage.getItem("loginLock");
     if (savedLockData) {
       const { lockUntil, attempts } = JSON.parse(savedLockData);
 
       if (lockUntil > Date.now()) {
-        // Lock is still active
         setIsLocked(true);
         setLoginAttempts(attempts);
         const remainingSeconds = Math.ceil((lockUntil - Date.now()) / 1000);
         setLockTimeRemaining(remainingSeconds);
       } else {
-        // Lock has expired, clear it
         localStorage.removeItem("loginLock");
       }
     }
@@ -48,7 +45,6 @@ function LoginPage() {
       intervalId = setInterval(() => {
         setLockTimeRemaining((prev) => {
           if (prev <= 1) {
-            // Time's up, unlock
             setIsLocked(false);
             clearInterval(intervalId);
             localStorage.removeItem("loginLock");
@@ -74,7 +70,6 @@ function LoginPage() {
     setIsLocked(true);
     setLockTimeRemaining(LOCK_DURATION);
 
-    // Save lock state to localStorage
     localStorage.setItem(
       "loginLock",
       JSON.stringify({
@@ -101,7 +96,6 @@ function LoginPage() {
     const result = await login(email, password);
 
     if (result.success) {
-      // Reset attempts on successful login
       setLoginAttempts(0);
       localStorage.removeItem("loginLock");
       await createAuditLog({
@@ -113,7 +107,6 @@ function LoginPage() {
       });
       navigate("/landing", { replace: true });
     } else {
-      // Increment failed attempts
       const newAttempts = loginAttempts + 1;
       setLoginAttempts(newAttempts);
 
@@ -132,7 +125,6 @@ function LoginPage() {
     setLoading(false);
   };
 
-  // Format time remaining as mm:ss
   const formatTimeRemaining = () => {
     const minutes = Math.floor(lockTimeRemaining / 60);
     const seconds = lockTimeRemaining % 60;

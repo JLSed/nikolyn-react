@@ -40,7 +40,6 @@ function CashierPage() {
   useEffect(() => {
     let total = 0;
 
-    // Calculate services total
     Object.entries(selectedServices).forEach(([serviceName, data]) => {
       if (serviceName === "Full Service") {
         total += data.service_price;
@@ -136,13 +135,11 @@ function CashierPage() {
           details: `Created Order ${receiptId}`,
           on_page: "Point of Sales",
         });
-        // Reset order state
         setSelectedServices({});
         setOrderProducts({});
         setOrderTotal(0);
         setCustomerName("");
 
-        // Refresh product inventory
         const productsResult = await getAllProducts();
         if (productsResult.success) {
           setProducts(productsResult.data || []);
@@ -178,7 +175,6 @@ function CashierPage() {
       return;
     }
 
-    // Check if order total exceeds ₱10,000
     if (orderTotal > 10000) {
       confirm({
         title: "High Value Order",
@@ -190,7 +186,6 @@ function CashierPage() {
         onConfirm: processOrder,
       });
     } else {
-      // If order is below threshold, process normally
       processOrder();
     }
   };

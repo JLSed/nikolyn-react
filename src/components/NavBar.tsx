@@ -42,7 +42,6 @@ function NavBar() {
           const currentWorker = { ...result, shortenedName: shortenedName };
           setworkerName(shortenedName);
           localStorage.setItem("currentWorker", JSON.stringify(currentWorker));
-          // Check user roles
           setWorkerRoles(result?.data?.roles);
         } else {
           console.error("Failed to fetch worker data:", result?.error);
@@ -60,7 +59,7 @@ function NavBar() {
         email: currentWorker.data.worker.email,
         action_type: "LOG OUT",
         details: `Account "${currentWorker.data.worker.email}" log off the system`,
-        on_page: "Clock Out",
+        on_page: "Log Out",
       });
       localStorage.removeItem("currentWorker");
       setIsClockOutModalOpen(false);
@@ -108,7 +107,7 @@ function NavBar() {
                 className="border-2 rounded-md bg-secondary px-2 py-1 cursor-pointer hover:bg-red-500 hover:text-secondary hover:border-red-500 transition-colors"
                 onClick={() => setIsClockOutModalOpen(true)}
               >
-                Clock out
+                Log Out
               </button>
             </div>
           </nav>
@@ -117,10 +116,10 @@ function NavBar() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 w-80 shadow-lg rounded-sm text-center">
               <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                Clock Out?
+                Log Out?
               </h2>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to clock out?
+                Are you sure you want to log out?
               </p>
               <div className="flex justify-center gap-4">
                 <button
@@ -133,7 +132,7 @@ function NavBar() {
                   className="px-4 py-2 bg-red-500 text-white rounded-sm hover:bg-red-600"
                   onClick={handleClockOut}
                 >
-                  Clock Out
+                  Log Out
                 </button>
               </div>
             </div>

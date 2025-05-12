@@ -6,7 +6,7 @@ export async function login(
   password: string
 ): Promise<ApiResponse<any>> {
   try {
-    // 1. Attempt to sign in
+    // attempt to sign in
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -14,7 +14,7 @@ export async function login(
 
     if (error) return { success: false, error: error.message };
 
-    // 2. Check if the user's worker account is deactivated
+    // check if the user's worker account is deactivated
     const { data: workerData, error: workerError } = await supabase
       .from("TBL_WORKER")
       .select("status, email, employee_id")
@@ -25,7 +25,7 @@ export async function login(
       return { success: false, error: "Error fetching worker status" };
     }
 
-    // 3. If account is deactivated, sign out and return error
+    // if account is deactivated, sign out and return error
     if (workerData.status === "DEACTIVATED") {
       await supabase.auth.signOut();
       return {
@@ -50,7 +50,6 @@ export async function signOut() {
   return { success: true };
 }
 
-// Update user's password
 export async function updatePassword(
   newPassword: string
 ): Promise<ApiResponse<any>> {
@@ -71,7 +70,6 @@ export async function updatePassword(
   }
 }
 
-// Update worker status
 export async function updateWorkerStatus(
   employeeId: string,
   status: string
@@ -102,7 +100,6 @@ export async function requestPasswordReset(email: string) {
       return { success: false, message: error.message };
     }
 
-    // Always return success even if the email doesn't exist (for security reasons)
     return { success: true };
   } catch (error) {
     console.error("Password reset request error:", error);
@@ -114,7 +111,6 @@ export async function sendPasswordReset(
   email: string
 ): Promise<ApiResponse<any>> {
   try {
-    // We'll use Supabase's built-in password reset functionality
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });

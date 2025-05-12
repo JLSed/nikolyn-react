@@ -4,7 +4,6 @@ import { BiSolidCartAdd } from "react-icons/bi";
 import { ProductItemEntries } from "../types/inventory";
 import { toast } from "react-hot-toast";
 
-// Define a type for products in the order
 export type OrderProduct = {
   entry_id: string;
   item_id: string;
@@ -44,7 +43,6 @@ function ProductSection({ products, setProducts, setOrderProducts }: Props) {
 
   const productsWithQuantity = Object.values(groupedProducts);
 
-  // Filter products based on the search term
   const filteredProducts = productsWithQuantity.filter((product) =>
     product.TBL_PRODUCT_ITEM.item_name
       .toLowerCase()
@@ -54,7 +52,6 @@ function ProductSection({ products, setProducts, setOrderProducts }: Props) {
   // Limit the number of products to 5
   const limitedProducts = filteredProducts.slice(0, 5);
 
-  // Handle adding a product to the order
   const addToOrder = (product: ProductItemEntries & { quantity: number }) => {
     if (product.quantity <= 0) {
       toast.error(`No more ${product.TBL_PRODUCT_ITEM.item_name} available`);
@@ -63,7 +60,6 @@ function ProductSection({ products, setProducts, setOrderProducts }: Props) {
 
     const itemId = product.TBL_PRODUCT_ITEM.item_id;
 
-    // Update the products list by reducing the quantity
     setProducts((prevProducts) => {
       return prevProducts.map((p) => {
         if (
@@ -79,7 +75,6 @@ function ProductSection({ products, setProducts, setOrderProducts }: Props) {
       });
     });
 
-    // Add to order products
     setOrderProducts((prev) => {
       const existing = prev[itemId];
 

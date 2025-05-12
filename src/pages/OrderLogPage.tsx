@@ -50,7 +50,7 @@ function OrderLogPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+  const today = new Date().toISOString().split("T")[0];
   const [dateRange, setDateRange] = useState({
     startDate: today,
     endDate: today,
@@ -60,7 +60,6 @@ function OrderLogPage() {
   );
   const [selectedDate, setSelectedDate] = useState(today);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  // Fetch orders data
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -78,7 +77,6 @@ function OrderLogPage() {
     fetchOrders();
   }, []);
 
-  // Filter orders based on search term and status filter
   const filteredOrders = orders.filter((order) => {
     const orderDate = new Date(order.created_at).toISOString().split("T")[0];
     const matchesSearch =
@@ -93,13 +91,11 @@ function OrderLogPage() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Open modal with selected order
   const handleOrderClick = (order: Order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  // Update order status to complete
   const handleCompleteOrder = async () => {
     if (!selectedOrder) return;
 
@@ -118,7 +114,6 @@ function OrderLogPage() {
         details: `Updated Order ${selectedOrder.receipt_id} to COMPLETED`,
         on_page: "Point of Sales",
       });
-      // Update the local state
       setOrders(
         orders.map((order) =>
           order.order_id === selectedOrder.order_id
@@ -141,7 +136,6 @@ function OrderLogPage() {
     setIsProcessing(false);
   };
 
-  // Update order status to complete
   const handleCancelOrder = async () => {
     if (!selectedOrder) return;
 
@@ -160,7 +154,6 @@ function OrderLogPage() {
         details: `Updated Order ${selectedOrder.receipt_id} to CANCELLED`,
         on_page: "Point of Sales",
       });
-      // Update the local state
       setOrders(
         orders.map((order) =>
           order.order_id === selectedOrder.order_id
@@ -183,7 +176,6 @@ function OrderLogPage() {
     setIsProcessing(false);
   };
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -220,7 +212,6 @@ function OrderLogPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
 
-      // Set up and trigger download
       link.setAttribute("href", url);
       link.setAttribute(
         "download",
@@ -237,7 +228,6 @@ function OrderLogPage() {
     }
   };
 
-  // Helper function to calculate days passed
   const calculateDaysPassed = (createdAt: string): number => {
     const createdDate = new Date(createdAt);
     const today = new Date();
@@ -482,10 +472,12 @@ function OrderLogPage() {
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                        {order.status === "PENDING"
+                      {order.status === "PENDING"
                         ? calculateDaysPassed(order.created_at) <= 1
                           ? "PENDING"
-                          : `PENDING ( ${calculateDaysPassed(order.created_at)} days )`
+                          : `PENDING ( ${calculateDaysPassed(
+                              order.created_at
+                            )} days )`
                         : order.status}
                     </span>
                   </div>
@@ -506,7 +498,9 @@ function OrderLogPage() {
           <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">{selectedOrder.receipt_id} Details</h2>
+                <h2 className="text-2xl font-bold">
+                  {selectedOrder.receipt_id} Details
+                </h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-500 hover:text-gray-700 text-xl"
@@ -582,9 +576,7 @@ function OrderLogPage() {
                                   key={laundryName}
                                   className="flex justify-between"
                                 >
-                                  <span>
-                                    {laundryName}
-                                  </span>
+                                  <span>{laundryName}</span>
                                   <span>
                                     ₱ {laundryData.laundry_total.toFixed(2)}
                                   </span>

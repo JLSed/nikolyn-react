@@ -18,10 +18,10 @@ function AddProductEntryModal({
     expiration_date: "",
     purchased_date: "",
     quantity: 1,
-    supplier: "", // New field
-    or_id: "", // New field
-    damaged_quantity: 0, // New field
-    missing_quantity: 0, // New field
+    supplier: "",
+    or_id: "",
+    damaged_quantity: 0,
+    missing_quantity: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,7 +80,6 @@ function AddProductEntryModal({
         </h2>
 
         {!selectedItem ? (
-          // Product Selection Screen
           <div>
             <div className="relative mb-4">
               <FaSearch className="absolute h-full left-2" />

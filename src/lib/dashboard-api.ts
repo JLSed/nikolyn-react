@@ -109,6 +109,7 @@ export async function getRecentSales(): Promise<ApiResponse<RecentSale[]>> {
       .from("TBL_ORDERS")
       .select("created_at, total_amount")
       .gte("created_at", sevenDaysAgo.toISOString())
+      .eq("status", "COMPLETE")
       .order("created_at", { ascending: true });
 
     if (error) {

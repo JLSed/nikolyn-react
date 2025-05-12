@@ -237,6 +237,14 @@ function OrderLogPage() {
     }
   };
 
+  // Helper function to calculate days passed
+  const calculateDaysPassed = (createdAt: string): number => {
+    const createdDate = new Date(createdAt);
+    const today = new Date();
+    const timeDifference = today.getTime() - createdDate.getTime();
+    return Math.floor(timeDifference / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+  };
+
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-fit min-h-screen">
       <Toaster position="top-right" />
@@ -474,7 +482,11 @@ function OrderLogPage() {
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {order.status}
+                        {order.status === "PENDING"
+                        ? calculateDaysPassed(order.created_at) <= 1
+                          ? "PENDING"
+                          : `PENDING ( ${calculateDaysPassed(order.created_at)} days )`
+                        : order.status}
                     </span>
                   </div>
                 </div>
@@ -494,7 +506,7 @@ function OrderLogPage() {
           <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Order Details</h2>
+                <h2 className="text-2xl font-bold">{selectedOrder.receipt_id} Details</h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
                   className="text-gray-500 hover:text-gray-700 text-xl"
@@ -571,7 +583,7 @@ function OrderLogPage() {
                                   className="flex justify-between"
                                 >
                                   <span>
-                                    {laundryName} ({laundryData.value} units)
+                                    {laundryName}
                                   </span>
                                   <span>
                                     ₱ {laundryData.laundry_total.toFixed(2)}

@@ -216,7 +216,7 @@ function SystemManagementPage() {
             await createAuditLog({
               employee_id: currentWorker.data.worker.employee_id,
               email: currentWorker.data.worker.email,
-              action_type: "UPDATE",
+              action_type: "UPDATE ACCOUNT",
               details: `Account "${selectedWorker.worker.email}" REACTIVATED by ${currentWorker.shortenedName}`,
               on_page: "System Management",
             });
@@ -275,7 +275,7 @@ function SystemManagementPage() {
             await createAuditLog({
               employee_id: currentWorker.data.worker.employee_id,
               email: currentWorker.data.worker.email,
-              action_type: "UPDATE",
+              action_type: "UPDATE ACCOUNT",
               details: `Account "${selectedWorker.worker.email}" DEACTIVATED by ${currentWorker.shortenedName}`,
               on_page: "System Management",
             });
@@ -387,6 +387,7 @@ function SystemManagementPage() {
             >
               <option value="ALL">All Statuses</option>
               <option value="ACTIVE">Active</option>
+              <option value="PENDING">Pending</option>
               <option value="DEACTIVATED">Deactivated</option>
             </select>
           </div>

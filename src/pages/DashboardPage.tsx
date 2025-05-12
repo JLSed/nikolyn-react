@@ -23,6 +23,7 @@ import {
 import { Chart, registerables } from "chart.js";
 import { AiOutlineAudit } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
+import { GrMoney } from "react-icons/gr";
 Chart.register(...registerables);
 
 function DashboardPage() {
@@ -339,9 +340,9 @@ function DashboardPage() {
       <Toaster position="top-right" />
       <NavBar />
 
-      <div className="flex justify-between items-center px-4">
+      <div className="flex justify-between items-center pr-2">
         <p className="font-michroma font-black text-3xl">DASHBOARD</p>
-        <div>
+        <div className="flex gap-2">
           <button
             onClick={() => navigate("/order-log")}
             className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
@@ -349,6 +350,13 @@ function DashboardPage() {
             <AiOutlineAudit />
             Order Log
           </button>
+                    <button
+                      onClick={() => navigate("/pricing-management")}
+                      className="border-2 border-primary px-2 py-1 flex items-center gap-2 rounded-lg bg-primary text-secondary hover:bg-secondary hover:text-primary transition-colors"
+                    >
+                      <GrMoney />
+                      Change Pricing
+                    </button>
         </div>
       </div>
 

@@ -409,37 +409,35 @@ function AuditLogPage() {
                 </button>
               </div>
 
+              <div className="mb-6">
+                <h3 className="text-xl font-bold mb-2">Details</h3>
+                <div className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">
+                {actor
+                      ? `${actor.first_name} ${
+                          actor.middle_name ? actor.middle_name + " " : ""
+                        }${actor.last_name}`
+                      : "Unknown"}: {selectedLog.details} at {formatDateTime(selectedLog.timestamp)}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <p className="text-gray-500">Log ID</p>
-                  <p className="font-semibold">{selectedLog.log_id}</p>
+                <p className="text-gray-500">Email</p>
+                  {selectedLog.email}
+                  <p className="font-semibold"></p> 
                 </div>
                 <div>
-                  <p className="text-gray-500">Timestamp</p>
+                <p className="text-gray-500">On Page</p>
+                  <p className="font-semibold">{selectedLog.on_page}</p>
+
+                </div>
+                <div>
+                <p className="text-gray-500">Timestamp</p>
                   <p className="font-semibold">
                     {formatDateTime(selectedLog.timestamp)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Email</p>
-                  <p className="font-semibold">{selectedLog.email}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Employee ID</p>
-                  <p className="font-semibold">{selectedLog.employee_id}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Actor Name</p>
-                  <p className="font-semibold">
-                    {actor
-                      ? `${actor.first_name} ${
-                          actor.middle_name ? actor.middle_name + " " : ""
-                        }${actor.last_name}`
-                      : "Unknown"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Action Type</p>
+                <p className="text-gray-500">Action Type</p>
                   <p className="font-semibold">
                     <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
                       {selectedLog.action_type}
@@ -447,17 +445,12 @@ function AuditLogPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500">On Page</p>
-                  <p className="font-semibold">{selectedLog.on_page}</p>
+
+                </div>
+                <div>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-2">Details</h3>
-                <div className="bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">
-                  {selectedLog.details}
-                </div>
-              </div>
 
               <div className="flex justify-end">
                 <button

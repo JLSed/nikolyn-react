@@ -53,7 +53,7 @@ function InventoryPage() {
   const [selectedItemToEdit, setSelectedItemToEdit] =
     useState<ProductItem | null>(null);
   const { confirm } = useConfirm();
-
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const groupedProducts = products.reduce((acc, product) => {
     const itemName = product.TBL_PRODUCT_ITEM.item_name;
     if (!acc[itemName]) {
@@ -229,10 +229,30 @@ function InventoryPage() {
     setIsEditItemModalOpen(true);
   };
 
-  const filteredProducts = Object.entries(groupedProducts).filter(
-    ([itemName]) => itemName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = Object.entries(groupedProducts)
+  .filter(([itemName]) =>
+    itemName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .sort(([_, a], [__, b]) => {
+    const totalQuantityA = a.entries.reduce(
+      (sum, entry) => sum + (entry.quantity || 0),
+      0
+    );
+    const totalQuantityB = b.entries.reduce(
+      (sum, entry) => sum + (entry.quantity || 0),
+      0
+    );
 
+    if (sortOrder === "asc") {
+      return totalQuantityA - totalQuantityB;
+    } else if (sortOrder === "desc") {
+      return totalQuantityB - totalQuantityA;
+    }
+    return 0; // No sorting
+  });
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
   return (
     <main className="flex flex-col gap-2 bg-secondary text-primary font-outfit h-svh overflow-hidden">
       <Toaster position="top-right" />
@@ -242,6 +262,8 @@ function InventoryPage() {
         <div className="flex gap-2 pr-2"></div>
       </div>
       <div className="flex justify-between bg-primary mx-4 p-4 rounded-lg">
+        <div className="flex flex-1  items-center gap-2">
+
         <div className="relative flex-1 max-w-md">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -250,8 +272,16 @@ function InventoryPage() {
             className="pl-10 p-2 w-full rounded-lg bg-secondary border border-primary"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-          />
+            />
         </div>
+        <button
+      onClick={toggleSortOrder}
+      className="flex items-center gap-2 px-4 py-2 bg-secondary text-primary rounded"
+    >
+      {sortOrder === "asc" ? "Sort: Quantity ↑" : "Sort: Quantity ↓"}
+    </button>
+            </div>
+        
         <div className="flex gap-2">
           <button
             onClick={() => setIsAddItemModalOpen(true)}
@@ -299,7 +329,6 @@ function InventoryPage() {
               >
                 <div className="grid grid-cols-5 py-3">
                   {" "}
-                  {/* Updated to 5 columns */}
                   <div className="flex items-center gap-2 px-2">
                     <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
                     <div className="h-5 bg-gray-300 rounded w-3/4"></div>
@@ -340,7 +369,6 @@ function InventoryPage() {
                   )}
                 </div>
                 <div>₱ {item.price}</div>
-                {/* Add edit button */}
                 <div className="flex justify-center">
                   <button
                     onClick={(e) => handleEditButtonClick(e, item)}
@@ -353,7 +381,7 @@ function InventoryPage() {
               </div>
 
               {expandedItems[itemName] && (
-                <div className="bg-[#c4c7c3] rounded-xl p-3 mb-2">
+                <div className="bg-white rounded-xl p-3 mb-2">
                   <div className="grid grid-cols-4 font-semibold text-accent2 mb-1 text-sm pb-1 border-b border-gray-600">
                     <div>Supplier</div>
                     <div>Purchase Date</div>
@@ -440,10 +468,6 @@ function InventoryPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-sm text-gray-500">Entry ID:</p>
-                  <p className="font-mono text-sm">{selectedEntry.entry_id}</p>
-                </div>
 
                 <div>
                   <p className="text-sm text-gray-500">OR/Invoice ID:</p>
@@ -477,8 +501,7 @@ function InventoryPage() {
                   <p className="text-sm text-gray-500">Quantity:</p>
                   <p className="font-semibold">{selectedEntry.quantity || 1}</p>
                 </div>
-
-                {/* Make damaged quantity editable */}
+<div></div>
                 <div>
                   <p className="text-sm text-gray-500">Damaged:</p>
                   <div className="flex items-center">

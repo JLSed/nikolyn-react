@@ -235,7 +235,7 @@ export async function getOrderStatusBreakdown(): Promise<
 }
 
 export async function getLowStockProducts(
-  threshold: number = 5
+  threshold: number = 15
 ): Promise<ApiResponse<LowStockProduct[]>> {
   try {
     const { data, error } = (await supabase.from("TBL_PRODUCT_ENTRY").select(`
